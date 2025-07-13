@@ -1,7 +1,13 @@
 package com.madcamp.moody.controller;
 
+import com.madcamp.moody.music.MusicGenre;
+import com.madcamp.moody.music.MusicRegion;
 import com.madcamp.moody.user.User;
 import com.madcamp.moody.user.UserRepository;
+
+import java.util.List;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -204,10 +210,38 @@ public class AuthController {
                 return ResponseEntity.status(404).body(Map.of("error", "사용자를 찾을 수 없습니다"));
             }
 
-            // 온보딩 데이터 업데이트 (필요한 경우)
+            // 온보딩 데이터 업데이트
             String nickname = (String) onboardingData.get("nickname");
             if (nickname != null && !nickname.trim().isEmpty()) {
                 user.setName(nickname);
+            }
+            
+            // 음악 지역 선호도 저장
+            String musicRegion = (String) onboardingData.get("musicRegion");
+            if (musicRegion != null) {
+                user.setMusicRegion(MusicRegion.fromValue(musicRegion));
+            }
+            
+            // 음악 장르 선호도 저장 (여러 장르를 JSON으로 저장)
+            @SuppressWarnings("unchecked")
+            List<String> musicPreferences = (List<String>) onboardingData.get("musicPreferences");
+            if (musicPreferences != null && !musicPreferences.isEmpty()) {
+                try {
+                    // 프론트엔드 용어를 데이터베이스 용어로 변환
+                    List<String> convertedGenres = new ArrayList<>();
+                    for (String genre : musicPreferences) {
+                        MusicGenre musicGenre = convertToMusicGenre(genre);
+                        if (musicGenre != null) {
+                            convertedGenres.add(musicGenre.name());
+                        }
+                    }
+                    
+                    ObjectMapper objectMapper = new ObjectMapper();
+                    String musicGenresJson = objectMapper.writeValueAsString(convertedGenres);
+                    user.setMusicGenres(musicGenresJson);
+                } catch (JsonProcessingException e) {
+                    System.err.println("Error serializing music genres: " + e.getMessage());
+                }
             }
             
             userRepository.save(user);
@@ -218,6 +252,23 @@ public class AuthController {
             System.err.println("Error in completeOnboarding: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(500).body(Map.of("error", "서버 오류가 발생했습니다"));
+        }
+    }
+
+    // 프론트엔드 용어를 MusicGenre enum으로 변환하는 메서드
+    private MusicGenre convertToMusicGenre(String frontendGenre) {
+        switch (frontendGenre) {
+            case "팝": return MusicGenre.pop;
+            case "락": return MusicGenre.rock;
+            case "힙합": return MusicGenre.hip_hop;
+            case "R&B": return MusicGenre.r_n_b;
+            case "K-POP": return MusicGenre.k_pop;
+            case "재즈": return MusicGenre.jazz;
+            case "EDM": return MusicGenre.electronic;
+            case "컨트리": return MusicGenre.country;
+            case "댄스": return MusicGenre.dance;
+            case "인디": return MusicGenre.indie;
+            default: return null;
         }
     }
 

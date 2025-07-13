@@ -6,19 +6,30 @@ function Onboarding() {
   const [step, setStep] = useState(1);
   const [userData, setUserData] = useState({
     nickname: "",
+    musicRegion: "", // 국내/해외 선호도
     musicPreferences: []
   });
   const navigate = useNavigate();
 
   const musicGenres = [
-    "팝", "락", "재즈", "클래식", "힙합", "R&B", 
-    "일렉트로닉", "컨트리", "레게", "블루스", "메탈", "포크"
+    "팝", "락", "힙합", "R&B", "재즈", "K-POP", 
+    "EDM", "컨트리", "댄스", "인디"
   ];
 
   const handleNicknameSubmit = (e) => {
     e.preventDefault();
     if (userData.nickname.trim()) {
       setStep(2);
+    }
+  };
+
+  const handleMusicRegionSelect = (region) => {
+    setUserData(prev => ({ ...prev, musicRegion: region }));
+  };
+
+  const handleMusicRegionNext = () => {
+    if (userData.musicRegion) {
+      setStep(3);
     }
   };
 
@@ -99,6 +110,60 @@ function Onboarding() {
 
         {step === 2 && (
           <div className="onboarding-step">
+            <h2>어떤 음악을 선호하시나요?</h2>
+            <p>주로 듣는 음악의 지역을 선택해주세요.</p>
+            <div className="music-region-selection">
+              <button
+                className={`region-btn ${userData.musicRegion === 'domestic' ? 'selected' : ''}`}
+                onClick={() => handleMusicRegionSelect('domestic')}
+              >
+                <div className="region-icon">🇰🇷</div>
+                <div className="region-text">
+                  <h3>국내음악</h3>
+                  <p>K-POP, 국내 가수 음악</p>
+                </div>
+              </button>
+              <button
+                className={`region-btn ${userData.musicRegion === 'international' ? 'selected' : ''}`}
+                onClick={() => handleMusicRegionSelect('international')}
+              >
+                <div className="region-icon">🌍</div>
+                <div className="region-text">
+                  <h3>해외음악</h3>
+                  <p>해외 가수, 글로벌 음악</p>
+                </div>
+              </button>
+              <button
+                className={`region-btn ${userData.musicRegion === 'both' ? 'selected' : ''}`}
+                onClick={() => handleMusicRegionSelect('both')}
+              >
+                <div className="region-icon">🎵</div>
+                <div className="region-text">
+                  <h3>둘 다</h3>
+                  <p>국내음악과 해외음악 모두</p>
+                </div>
+              </button>
+            </div>
+            <div className="onboarding-actions">
+              <button 
+                className="back-btn" 
+                onClick={() => setStep(1)}
+              >
+                이전
+              </button>
+              <button 
+                className="next-btn" 
+                onClick={handleMusicRegionNext}
+                disabled={!userData.musicRegion}
+              >
+                다음
+              </button>
+            </div>
+          </div>
+        )}
+
+        {step === 3 && (
+          <div className="onboarding-step">
             <h2>음악 취향을 알려주세요</h2>
             <p>좋아하는 음악 장르를 선택해주세요. (복수 선택 가능)</p>
             <div className="music-preferences">
@@ -115,7 +180,7 @@ function Onboarding() {
             <div className="onboarding-actions">
               <button 
                 className="back-btn" 
-                onClick={() => setStep(1)}
+                onClick={() => setStep(2)}
               >
                 이전
               </button>
