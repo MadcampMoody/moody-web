@@ -1,19 +1,21 @@
-import {useEffect, useState} from "react";
-import axios from "axios";
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Home from './components/Home';
+import SpotifyPage from './components/SpotifyPage';
+import MusicRecommendPage from './components/MusicRecommendPage';
+import './App.css';
 
 function App() {
-  const [hello, setHello] = useState('');
-
-  useEffect(() => {
-    axios.get('/api/test')
-        .then((res) => {
-          setHello(res.data);
-        })
-  }, []);
   return (
+    <Router>
       <div className="App">
-        백엔드 데이터 : {hello}
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/spotify" element={<SpotifyPage />} />
+          <Route path="/music_recommend" element={<MusicRecommendPage />} />
+        </Routes>
       </div>
+    </Router>
   );
 }
 
