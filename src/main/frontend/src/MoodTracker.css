@@ -1,16 +1,17 @@
 .mood-tracker-container {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #ffffff; /* 흰색 배경으로 변경 */
   padding: 20px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-.mood-tracker-header {
-  background: white;
+.mood-tracker-header, .calendar-container, .selected-date-info {
+  background: #505050; /* 포인트 색상 배경으로 변경 */
+  color: white; /* 내부 기본 글자색 흰색으로 변경 */
   border-radius: 20px;
   padding: 30px;
   margin-bottom: 30px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 }
 
 .header-content {
@@ -22,20 +23,20 @@
 }
 
 .user-welcome h1 {
-  color: #333;
+  color: white; /* 흰색 글씨 */
   font-size: 28px;
   margin: 0 0 8px 0;
   font-weight: 700;
 }
 
 .user-welcome p {
-  color: #666;
+  color: #e0e0e0; /* 약간 밝은 회색 글씨 */
   font-size: 16px;
   margin: 0;
 }
 
-.today-btn {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+.today-btn, .add-mood-btn {
+  background: #505050; /* 포인트 색상으로 변경 */
   color: white;
   border: none;
   padding: 12px 24px;
@@ -46,9 +47,10 @@
   transition: all 0.3s ease;
 }
 
-.today-btn:hover {
+.today-btn:hover, .add-mood-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+  background: #3a3a3a; /* 호버 시 약간 더 어둡게 */
+  box-shadow: 0 8px 15px rgba(80, 80, 80, 0.2);
 }
 
 .logout-btn {
@@ -70,12 +72,14 @@
   box-shadow: 0 8px 20px rgba(220, 53, 69, 0.3);
 }
 
+/*
 .calendar-container {
   background: white;
   border-radius: 20px;
   padding: 30px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
 }
+*/
 
 .calendar-header {
   display: flex;
@@ -85,9 +89,9 @@
 }
 
 .nav-btn {
-  background: #f8f9fa;
-  border: 2px solid #e1e5e9;
-  color: #333;
+  background: #6a6a6a; /* 어두운 배경 */
+  border: 2px solid #888;
+  color: white; /* 흰색 글씨 */
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -101,14 +105,14 @@
 }
 
 .nav-btn:hover {
-  background: #667eea;
-  color: white;
-  border-color: #667eea;
+  background: white; /* 흰색 배경 */
+  color: #505050; /* 포인트 색상 글씨 */
+  border-color: white;
   transform: scale(1.1);
 }
 
 .month-year {
-  color: #333;
+  color: white; /* 흰색 글씨 */
   font-size: 24px;
   font-weight: 700;
   margin: 0;
@@ -128,7 +132,7 @@
 .weekday {
   text-align: center;
   font-weight: 600;
-  color: #666;
+  color: #e0e0e0; /* 약간 밝은 회색 글씨 */
   padding: 15px 5px;
   font-size: 14px;
 }
@@ -150,24 +154,25 @@
   cursor: pointer;
   transition: all 0.3s ease;
   position: relative;
-  background: #f8f9fa;
+  background: #6a6a6a; /* 어두운 배경 */
+  color: white;
 }
 
 .calendar-day:hover {
-  background: #e3f2fd;
-  border-color: #667eea;
+  background: #888; /* 호버 시 약간 밝게 */
+  border-color: white;
   transform: scale(1.05);
 }
 
 .calendar-day.other-month {
-  color: #ccc;
-  background: #fafafa;
+  color: #888;
+  background: #5a5a5a;
 }
 
 .calendar-day.today {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border-color: #667eea;
+  background: #f0f0f0; /* 밝은 회색 배경 */
+  color: #505050; /* 어두운 글씨 */
+  border-color: #f0f0f0;
   font-weight: bold;
 }
 
@@ -193,13 +198,14 @@
 }
 
 .calendar-day.today .mood-indicator {
-  background: white;
+  background: #505050; /* 어두운 색 */
 }
 
 .calendar-day.selected .mood-indicator {
   background: white;
 }
 
+/*
 .selected-date-info {
   background: white;
   border-radius: 20px;
@@ -208,20 +214,23 @@
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   text-align: center;
 }
+*/
 
 .selected-date-info h3 {
-  color: #333;
+  color: white; /* 흰색 글씨 */
   font-size: 20px;
   margin: 0 0 10px 0;
   font-weight: 600;
 }
 
 .selected-date-info p {
-  color: #666;
+  color: #e0e0e0; /* 약간 밝은 회색 글씨 */
   font-size: 16px;
   margin: 0;
 }
 
+/* .add-mood-btn 과 관련된 부분은 .today-btn과 통합 */
+/*
 .add-mood-btn {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
@@ -248,10 +257,11 @@
 
 .add-mood-btn:active {
   transform: translateY(-1px);
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
 }
-
+*/
 .plus-icon {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: bold;
 }
 
