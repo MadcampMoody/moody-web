@@ -23,6 +23,8 @@ import java.util.stream.Collectors;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 @Service
 public class GroqService {
@@ -276,9 +278,21 @@ public class GroqService {
                 analysisResult.getKeywords()
         );
 
-        // 3. 응답 변환
+        // 3. 응답 변환 및 아티스트 중복 제거
+        Set<String> processedArtists = new HashSet<>();
         List<GroqDTO.MusicAnalysisResponse.RecommendedTrack> recommendedTracks =
                 spotifyResult.getTracks().stream()
+                        .filter(track -> {
+                            String artistName = track.getArtist();
+                            if (artistName == null || artistName.isEmpty()) {
+                                return false; // 아티스트 이름이 없으면 필터링
+                            }
+                            // "ft.", "feat.", "&", "," 등의 구분자를 사용하여 첫 번째 아티스트 이름만 추출
+                            String primaryArtist = artistName.split(",|ft\\.|feat\\.|&")[0].trim();
+                            
+                            // Set에 주요 아티스트가 없으면 true를 반환하고, Set에 추가
+                            return processedArtists.add(primaryArtist.toLowerCase());
+                        })
                         .map(track -> new GroqDTO.MusicAnalysisResponse.RecommendedTrack(
                                 track.getTitle(),
                                 track.getArtist(),

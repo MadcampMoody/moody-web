@@ -16,11 +16,12 @@ const MusicRecommendPage = () => {
     
     setLoading(true);
     try {
-      const response = await fetch('http://127.0.0.1:8080/api/groq/recommend-music', {
+      const response = await fetch('http://localhost:8080/api/groq/recommend-music', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include', // 인증 정보를 포함하도록 설정
         body: JSON.stringify({ prompt: inputText }),
       });
       

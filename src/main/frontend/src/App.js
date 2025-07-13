@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate, Link } from "react-router-dom";
 import "./App.css";
 import Onboarding from "./Onboarding";
 import Dashboard from "./Dashboard";
+import MusicRecommendPage from "./components/MusicRecommendPage";
 
 function App() {
   const [error, setError] = useState('');
@@ -46,6 +47,13 @@ function App() {
             >
               카카오 로그인하기
             </button>
+            <Link to="/music_recommend" style={{ textDecoration: 'none', display: 'block', marginTop: '10px' }}>
+              <button 
+                className="kakao-login-btn"
+              >
+                음악 추천 페이지로
+              </button>
+            </Link>
           </div>
         </div>
       </div>
@@ -58,6 +66,7 @@ function App() {
         <Route path="/" element={<LoginPage />} />
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/music_recommend" element={<MusicRecommendPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
