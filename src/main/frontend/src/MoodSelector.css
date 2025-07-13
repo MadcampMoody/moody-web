@@ -1,0 +1,249 @@
+.mood-selector-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.mood-selector-modal {
+  background: white;
+  border-radius: 25px;
+  padding: 30px;
+  max-width: 600px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.mood-selector-header {
+  text-align: center;
+  margin-bottom: 30px;
+  position: relative;
+}
+
+.mood-selector-header h2 {
+  color: #333;
+  font-size: 24px;
+  margin: 0 0 10px 0;
+  font-weight: 700;
+}
+
+.mood-selector-header p {
+  color: #666;
+  font-size: 16px;
+  margin: 0;
+}
+
+.close-btn {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background: #f8f9fa;
+  border: 2px solid #e1e5e9;
+  color: #666;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-btn:hover {
+  background: #dc3545;
+  color: white;
+  border-color: #dc3545;
+  transform: scale(1.1);
+}
+
+.mood-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+.mood-sticker {
+  background: white;
+  border: 3px solid #e1e5e9;
+  border-radius: 20px;
+  padding: 20px 15px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.mood-sticker::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--mood-color);
+  opacity: 0.1;
+  transition: opacity 0.3s ease;
+}
+
+.mood-sticker:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  border-color: var(--mood-color);
+}
+
+.mood-sticker:hover::before {
+  opacity: 0.2;
+}
+
+.mood-sticker.selected {
+  border-color: var(--mood-color);
+  background: var(--mood-color);
+  color: white;
+  transform: scale(1.05);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.mood-sticker.selected::before {
+  opacity: 0;
+}
+
+.mood-emoji {
+  font-size: 32px;
+  margin-bottom: 8px;
+  position: relative;
+  z-index: 1;
+}
+
+.mood-name {
+  font-size: 14px;
+  font-weight: 600;
+  position: relative;
+  z-index: 1;
+}
+
+.mood-sticker.selected .mood-name {
+  color: white;
+}
+
+.mood-selector-actions {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+}
+
+.cancel-btn, .confirm-btn {
+  padding: 15px 30px;
+  border-radius: 15px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  min-width: 120px;
+}
+
+.cancel-btn {
+  background: #f8f9fa;
+  color: #666;
+  border: 2px solid #e1e5e9;
+}
+
+.cancel-btn:hover {
+  background: #e9ecef;
+  transform: translateY(-2px);
+}
+
+.confirm-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.confirm-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+}
+
+.confirm-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .mood-selector-modal {
+    padding: 20px;
+    margin: 10px;
+  }
+  
+  .mood-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  
+  .mood-sticker {
+    padding: 15px 10px;
+  }
+  
+  .mood-emoji {
+    font-size: 28px;
+  }
+  
+  .mood-name {
+    font-size: 12px;
+  }
+  
+  .mood-selector-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .cancel-btn, .confirm-btn {
+    width: 100%;
+    max-width: 200px;
+  }
+}
+
+@media (max-width: 480px) {
+  .mood-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .mood-sticker {
+    padding: 12px 8px;
+  }
+  
+  .mood-emoji {
+    font-size: 24px;
+  }
+  
+  .mood-name {
+    font-size: 11px;
+  }
+} 
