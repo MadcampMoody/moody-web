@@ -12,8 +12,8 @@ function Onboarding() {
   const navigate = useNavigate();
 
   const musicGenres = [
-    "팝", "락", "재즈", "클래식", "힙합", "R&B", 
-    "일렉트로닉", "컨트리", "레게", "블루스", "메탈", "포크"
+    "팝", "락", "힙합", "R&B", "재즈", "K-POP", 
+    "EDM", "컨트리", "댄스", "인디"
   ];
 
   const handleNicknameSubmit = (e) => {
