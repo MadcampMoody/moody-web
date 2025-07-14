@@ -63,6 +63,7 @@ public class SpotifyDTO {
         private ExternalUrls externalUrls;
         @JsonProperty("preview_url")
         private String previewUrl;
+        private int popularity;
 
         // Getters and Setters
         public String getId() { return id; }
@@ -75,6 +76,8 @@ public class SpotifyDTO {
         public void setExternalUrls(ExternalUrls externalUrls) { this.externalUrls = externalUrls; }
         public String getPreviewUrl() { return previewUrl; }
         public void setPreviewUrl(String previewUrl) { this.previewUrl = previewUrl; }
+        public int getPopularity() { return popularity; }
+        public void setPopularity(int popularity) { this.popularity = popularity; }
     }
 
     public static class Artist {
@@ -100,20 +103,21 @@ public class SpotifyDTO {
     
     // 최종 추천 결과를 담는 DTO
     @Data
-    @NoArgsConstructor
     @AllArgsConstructor
+    @NoArgsConstructor
     public static class MusicRecommendation {
         private List<RecommendedTrack> tracks;
 
         @Data
-        @NoArgsConstructor
         @AllArgsConstructor
+        @NoArgsConstructor
         public static class RecommendedTrack {
             private String title;
             private String artist;
             private String spotifyUrl;
             private String previewUrl;
             private String trackId;
+            private int popularity;
         }
     }
 } 

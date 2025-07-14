@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import "./MoodTracker.css";
 import MoodSelector from "./MoodSelector";
 import { useNavigate } from "react-router-dom";
@@ -137,6 +138,9 @@ function MoodTracker() {
             <p>오늘 하루는 어떠셨나요?</p>
           </div>
           <div className="header-actions">
+            <button className="today-btn" onClick={() => navigate('/music_recommend')}>
+              음악 추천
+            </button>
             <button className="today-btn" onClick={goToToday}>
               오늘
             </button>

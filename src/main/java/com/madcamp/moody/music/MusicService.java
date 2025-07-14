@@ -1,5 +1,7 @@
 package com.madcamp.moody.music;
 
+import com.madcamp.moody.user.User;
+import com.madcamp.moody.user.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,10 +15,12 @@ import java.util.stream.Collectors;
 public class MusicService {
 
     private final MusicRepository musicRepository;
+    private final UserRepository userRepository;
 
     @Autowired
-    public MusicService(MusicRepository musicRepository) {
+    public MusicService(MusicRepository musicRepository, UserRepository userRepository) {
         this.musicRepository = musicRepository;
+        this.userRepository = userRepository;
     }
 
     // 모든 music 조회
@@ -77,7 +81,15 @@ public class MusicService {
     // 여러 music 생성
     public List<MusicDTO> createMusics(List<MusicDTO> musicDTOs) {
         List<Music> musicList = musicDTOs.stream()
-                .map(dto -> new Music(dto.getMusicUrl(), dto.getPlaylistId()))
+                .map(dto -> {
+                    Music music = new Music(dto.getMusicUrl(), dto.getPlaylistId());
+                    if (dto.getUserId() != null) {
+                        User user = userRepository.findById(dto.getUserId())
+                                .orElseThrow(() -> new IllegalArgumentException("Invalid user Id:" + dto.getUserId()));
+                        music.setUser(user);
+                    }
+                    return music;
+                })
                 .collect(Collectors.toList());
         
         List<Music> savedMusicList = musicRepository.saveAll(musicList);

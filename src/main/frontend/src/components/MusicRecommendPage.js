@@ -1,140 +1,125 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
 import './MusicRecommendPage.css';
 
 const MusicRecommendPage = () => {
-  const navigate = useNavigate();
-  const [inputText, setInputText] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState(null);
+    const [recommendedTracks, setRecommendedTracks] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const [userName, setUserName] = useState('사용자'); // 기본값 설정
+    const [diaryText, setDiaryText] = useState(''); // 일기 내용을 위한 상태 추가
 
-  const handleGenerateWords = async () => {
-    if (!inputText.trim()) {
-      alert('텍스트를 입력해주세요!');
-      return;
-    }
-    
-    setLoading(true);
-    try {
-      const response = await fetch('http://localhost:8080/api/groq/recommend-music', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include', // 인증 정보를 포함하도록 설정
-        body: JSON.stringify({ prompt: inputText }),
-      });
-      
-      const data = await response.json();
-      setResult(data);
-    } catch (error) {
-      console.error('Error:', error);
-      setResult({ keywords: '', tracks: [] });
-    } finally {
-      setLoading(false);
-    }
-  };
+    // 사용자 정보 가져오기
+    useEffect(() => {
+        const fetchUserInfo = async () => {
+            try {
+                const response = await fetch('/api/user/me', {
+                    credentials: 'include' // 쿠키 기반 인증
+                });
+                if (response.ok) {
+                    const userData = await response.json();
+                    setUserName(userData.name || '사용자');
+                }
+            } catch (error) {
+                console.error('사용자 정보 로딩 실패:', error);
+            }
+        };
+        fetchUserInfo();
+    }, []);
 
-  return (
-    <div className="music-recommend-page">
-      <header className="page-header">
-        <button onClick={() => navigate('/')} className="back-button">
-          ← 홈으로
-        </button>
-        <h1>🎵 음악 추천 도우미</h1>
-        <p>텍스트를 입력하면 AI가 감정을 분석하여 음악을 추천해드립니다</p>
-      </header>
+    const handleRecommendation = async () => {
+        if (!diaryText) {
+            setError('일기 내용이 비어있습니다.');
+            return;
+        }
 
-      <div className="content-container">
-        <div className="input-section">
-          <h2>📝 텍스트 입력</h2>
-          <textarea
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            placeholder="분석하고 싶은 텍스트를 입력하세요... (일기, 생각, 감정 등)"
-            className="text-input"
-            rows="10"
-          />
-          <button 
-            onClick={handleGenerateWords} 
-            disabled={loading || !inputText.trim()}
-            className="generate-button"
-          >
-            {loading ? '분석 중...' : '🔍 음악 추천'}
-          </button>
-        </div>
+        setLoading(true);
+        setError(null);
+        setRecommendedTracks([]);
 
-        {result && (
-          <div className="result-section">
-            <h2>🎯 AI 분석 결과</h2>
-            {result.analysis && (
-              <div className="analysis-content">
-                <div className="analysis-pills">
-                  <div className="pills-group">
-                    <h3 className="pills-title">장르</h3>
-                    {result.analysis.genres.map((genre, index) => (
-                      <span key={index} className="pill genre-pill">{genre}</span>
-                    ))}
-                  </div>
-                  <div className="pills-group">
-                    <h3 className="pills-title">키워드</h3>
-                    {result.analysis.keywords.map((keyword, index) => (
-                      <span key={index} className="pill keyword-pill">{keyword}</span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
+        try {
+            const response = await fetch('/api/groq/recommend-music', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include', // 쿠키 기반 인증
+                body: JSON.stringify({ prompt: diaryText }),
+            });
+
+            if (!response.ok) {
+                if (response.status === 401) {
+                    throw new Error('로그인이 필요합니다. 다시 로그인해주세요.');
+                }
+                throw new Error(`HTTP ${response.status} 에러 발생`);
+            }
+
+            const data = await response.json();
+            setRecommendedTracks(data.tracks || []);
+
+        } catch (error) {
+            setError(`추천을 받는 중 오류가 발생했습니다: ${error.message}`);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="recommendation-page-container">
+            <div className="input-section">
+                <h2>📝 오늘 하루를 기록해보세요</h2>
+                <textarea
+                    value={diaryText}
+                    onChange={(e) => setDiaryText(e.target.value)}
+                    placeholder="오늘의 감정, 생각, 있었던 일들을 자유롭게 적어보세요. AI가 당신의 글을 분석해 무드에 맞는 플레이리스트를 만들어 드려요."
+                    className="text-input"
+                    rows="10"
+                />
+            </div>
+
+            <button onClick={handleRecommendation} disabled={loading || !diaryText.trim()} className="recommend-button">
+                {loading ? '나를 위한 무드 추천 중...' : '나를 위한 무드 추천받기'}
+            </button>
             
-            {result.tracks && result.tracks.length > 0 && (
-              <div className="music-section">
-                <div className="playlist-header">
-                  <h2>🎵 {new Date().toLocaleDateString('ko-KR', { 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
-                  })} 추천 플레이리스트</h2>
-                  <p className="playlist-subtitle">AI가 당신의 감정을 분석하여 만든 특별한 플레이리스트</p>
-                </div>
+            {error && <p className="error-message">{error}</p>}
+
+            {recommendedTracks.length > 0 && (
                 <div className="playlist-container">
-                  <div className="playlist-info">
-                    <div className="playlist-cover">
-                      <div className="playlist-icon">🎶</div>
-                    </div>
-                    <div className="playlist-details">
-                      <h3 className="playlist-title">
-                        {new Date().toLocaleDateString('ko-KR').replace(/\./g, '-')} 플레이리스트
-                      </h3>
-                      <p className="playlist-description">총 {result.tracks.length}곡</p>
-                    </div>
-                  </div>
-                  <div className="track-list">
-                    {result.tracks.map((track, index) => (
-                      <div key={index} className="track-item">
-                        <div className="track-number">{index + 1}</div>
-                        <div className="track-embed">
-                          <iframe
-                            src={`https://open.spotify.com/embed/track/${track.trackId}?utm_source=generator&theme=0`}
-                            width="100%"
-                            height="80"
-                            frameBorder="0"
-                            allowfullscreen=""
-                            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                            loading="lazy"
-                            title={`${track.title} by ${track.artist}`}
-                          ></iframe>
+                    <h2 className="playlist-heading">{`${userName}님의 현재 무드에 맞는 플레이리스트를 만들어봤어요!`}</h2>
+                    <div className="playlist-card">
+                        <div className="playlist-header">
+                            <div className="header-icon">음악 앨범</div>
+                            <div className="header-title">플리제목</div>
+                            <div className="spotify-link">
+                                <a href="https://open.spotify.com" target="_blank" rel="noopener noreferrer">
+                                    spotify에서 듣기
+                                    <img src="https://storage.googleapis.com/pr-newsroom-wp/1/2018/11/Spotify_Logo_CMYK_Green.png" alt="Spotify" />
+                                </a>
+                            </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
+                        <div className="playlist-body">
+                            {recommendedTracks.map((track, index) => (
+                                <div key={track.trackId || index} className="playlist-track">
+                                    <span className="track-number">{index + 1}</span>
+                                    <div className="track-player-wrapper">
+                                        <iframe
+                                            src={`https://open.spotify.com/embed/track/${track.trackId}?utm_source=generator&theme=0`}
+                                            width="100%"
+                                            height="80"
+                                            frameBorder="0"
+                                            allowFullScreen=""
+                                            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                                            loading="lazy"
+                                            title={`${track.title} by ${track.artist}`}
+                                        ></iframe>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 </div>
-              </div>
             )}
-          </div>
-        )}
-      </div>
-    </div>
-  );
+        </div>
+    );
 };
 
 export default MusicRecommendPage; 

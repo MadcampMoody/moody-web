@@ -35,6 +35,12 @@
   margin: 0;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px; /* 버튼 사이 간격 추가 */
+}
+
 .today-btn, .add-mood-btn {
   background: #505050; /* 포인트 색상으로 변경 */
   color: white;

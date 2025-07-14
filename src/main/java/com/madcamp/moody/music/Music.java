@@ -1,6 +1,7 @@
 package com.madcamp.moody.music;
 
 import com.madcamp.moody.playlist.Playlist;
+import com.madcamp.moody.user.User;
 import jakarta.persistence.*;
 
 @Entity
@@ -22,6 +23,11 @@ public class Music {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "playlist_id", insertable = false, updatable = false)
     private Playlist playlist;
+
+    // User와의 관계 (Many-to-One)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
 
     // 기본 생성자
     public Music() {
@@ -66,12 +72,21 @@ public class Music {
         this.playlist = playlist;
     }
 
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
     @Override
     public String toString() {
         return "Music{" +
                 "musicId=" + musicId +
                 ", musicUrl='" + musicUrl + '\'' +
                 ", playlistId=" + playlistId +
+                (user != null ? ", userId=" + user.getId() : "") +
                 '}';
     }
 } 
