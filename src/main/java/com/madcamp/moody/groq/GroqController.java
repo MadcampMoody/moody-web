@@ -28,6 +28,6 @@ public class GroqController {
         // 이제 user 객체를 통해 현재 로그인한 사용자 정보를 알 수 있습니다.
         // 예를 들어, 사용자 이름을 로그로 출력해볼 수 있습니다.
         System.out.println("음악 추천 요청 사용자: " + user.getName());
-        return groqService.analyzeTextAndRecommendMusic(request.getPrompt(), user);
+        return groqService.analyzeTextAndRecommendMusic(request.getPrompt(), request.getDate(), user);
     }
 } 

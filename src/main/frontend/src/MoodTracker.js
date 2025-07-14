@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./MoodTracker.css";
 import MoodSelector from "./MoodSelector";
-import { useNavigate } from "react-router-dom";
 
 function MoodTracker() {
   const [currentDate, setCurrentDate] = useState(new Date());

@@ -76,6 +76,7 @@ public class GroqDTO {
     @AllArgsConstructor
     public static class SimpleRequest {
         private String prompt;
+        private String date;
     }
     
     @Data
@@ -111,10 +112,12 @@ public class GroqDTO {
     public static class MusicAnalysisResponse {
         private SpotifyAnalysisResult analysis;
         private List<RecommendedTrack> tracks;
+        private String playlistTitle;
 
-        public MusicAnalysisResponse(SpotifyAnalysisResult analysis, List<RecommendedTrack> tracks) {
+        public MusicAnalysisResponse(SpotifyAnalysisResult analysis, List<RecommendedTrack> tracks, String playlistTitle) {
             this.analysis = analysis;
             this.tracks = tracks;
+            this.playlistTitle = playlistTitle;
         }
 
         // Getters and Setters
@@ -122,6 +125,8 @@ public class GroqDTO {
         public void setAnalysis(SpotifyAnalysisResult analysis) { this.analysis = analysis; }
         public List<RecommendedTrack> getTracks() { return tracks; }
         public void setTracks(List<RecommendedTrack> tracks) { this.tracks = tracks; }
+        public String getPlaylistTitle() { return playlistTitle; }
+        public void setPlaylistTitle(String playlistTitle) { this.playlistTitle = playlistTitle; }
 
         @Data
         @NoArgsConstructor
