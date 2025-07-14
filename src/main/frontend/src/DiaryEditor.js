@@ -147,7 +147,6 @@ function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, o
   };
 
   return (
-    <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
     <div className="diary-main-paper" style={{ position: "relative" }}>
       {/* 상단 바: 날짜, 감정, 드롭다운 */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative" }}>
@@ -190,9 +189,14 @@ function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, o
               취소
             </button>
           </div>
-        </div>
 
         {error && <p className="error-message" style={{color: 'red', marginTop: '20px', textAlign: 'center'}}>{error}</p>}
+
+        {initialLoading && (
+          <div style={{textAlign: 'center', marginTop: '20px', color: '#666'}}>
+            기존 플레이리스트 확인 중...
+          </div>
+        )}
 
         {recommendedTracks.length > 0 && (
             <div ref={playlistRef} className="playlist-container" style={{marginTop: '30px', width: '100%'}}>
@@ -244,7 +248,7 @@ function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, o
                 </div>
             </div>
         )}
-      </div>
+    </div>
   );
 }
 

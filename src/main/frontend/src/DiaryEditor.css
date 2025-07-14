@@ -1,33 +1,31 @@
 body, html {
-  width: 100vw;
-  height: 100vh;
   margin: 0;
   padding: 0;
   background: #fff8f1; /* 종이색으로 통일 */
 }
 
 .diary-editor-container {
-  width: 100vw;
-  height: 100vh;
-  min-height: 100vh;
-  min-width: 100vw;
   display: flex;
   align-items: center;
   justify-content: center;
   background: #F4E0CF;
+  min-height: 100vh;
+  padding: 20px;
+  box-sizing: border-box;
 }
 
 .diary-main-paper {
-  width: 100vw;
-  height: 100vh;
-  min-width: 100vw;
-  min-height: 100vh;
+  max-width: 800px;
+  width: 100%;
+  margin: 0 auto;
   background: #fff8f1;
   display: flex;
   flex-direction: column;
   align-items: stretch;
   justify-content: flex-start;
   position: relative;
+  padding: 20px;
+  box-sizing: border-box;
 }
 
 .diary-date {
@@ -72,7 +70,7 @@ body, html {
 }
 
 .diary-textarea {
-  width: 70vw;
+  width: 100%;
   max-width: 900px;
   min-height: 45vh;
   background: #fff;
@@ -96,7 +94,7 @@ body, html {
 }
 
 .diary-actions {
-  width: 70vw;
+  width: 100%;
   max-width: 900px;
   margin: 24px auto 0 auto;
   display: flex;
@@ -142,8 +140,8 @@ body, html {
 
 @media (max-width: 900px) {
   .diary-textarea, .diary-actions {
-    width: 98vw;
-    max-width: 98vw;
+    width: 100%;
+    max-width: 100%;
     min-height: 30vh;
     font-size: 1rem;
     padding: 12px 8px;
