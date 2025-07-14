@@ -1,0 +1,80 @@
+.diary-editor-container {
+    max-width: 500px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    padding: 32px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .diary-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  
+  .diary-date {
+    font-size: 1.1rem;
+    color: #666;
+    font-weight: 500;
+  }
+  
+  .diary-mood {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .diary-mood-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+  
+  .diary-mood-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    margin-top: 4px;
+  }
+  
+  .diary-textarea {
+    width: 100%;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    padding: 16px;
+    font-size: 1rem;
+    resize: vertical;
+    min-height: 120px;
+  }
+  
+  .diary-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+  }
+  
+  .diary-save-btn {
+    background: #667eea;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 24px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  
+  .diary-cancel-btn {
+    background: #eee;
+    color: #333;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 24px;
+    font-weight: 600;
+    cursor: pointer;
+  }

@@ -4,6 +4,8 @@ import "./App.css";
 import Onboarding from "./Onboarding";
 import Dashboard from "./Dashboard";
 import MusicRecommendPage from "./components/MusicRecommendPage";
+import DiaryEditor from "./DiaryEditor";
+import DiaryEditorWrapper from "./DiaryEditorWrapper";
 
 function App() {
   const [error, setError] = useState('');
@@ -67,6 +69,7 @@ function App() {
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/music_recommend" element={<MusicRecommendPage />} />
+        <Route path="/diary/:date" element={<DiaryEditorWrapper />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
