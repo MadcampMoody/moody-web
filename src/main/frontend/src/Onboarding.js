@@ -59,9 +59,6 @@ function Onboarding() {
       console.log('백엔드 응답:', response.status);
       if (response.ok) {
         console.log('온보딩 완료 성공, dashboard로 이동');
-        // 로컬 스토리지에 저장
-        localStorage.setItem('userData', JSON.stringify(userData));
-        localStorage.setItem('onboardingCompleted', 'true');
         // Dashboard로 이동
         navigate('/dashboard');
       } else {

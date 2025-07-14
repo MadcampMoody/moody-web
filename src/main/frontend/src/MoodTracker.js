@@ -12,18 +12,138 @@ function MoodTracker() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // 로컬 스토리지에서 사용자 데이터 가져오기
-    const savedUserData = localStorage.getItem('userData');
-    if (savedUserData) {
-      setUserData(JSON.parse(savedUserData));
-    }
+    // 백엔드에서 사용자 데이터 가져오기
+    fetchUserData();
+    // 현재 월의 감정 기록 가져오기
+    fetchMoodRecords();
+  }, [currentDate]); // currentDate가 변경될 때마다 감정 기록 다시 가져오기
 
-    // 저장된 감정 기록 가져오기
-    const savedMoodRecords = localStorage.getItem('moodRecords');
-    if (savedMoodRecords) {
-      setMoodRecords(JSON.parse(savedMoodRecords));
+  const fetchUserData = async () => {
+    try {
+      const response = await fetch('/api/auth/user', {
+        credentials: 'include'
+      });
+      if (response.ok) {
+        const user = await response.json();
+        setUserData(user);
+      }
+    } catch (error) {
+      console.error('사용자 정보 가져오기 실패:', error);
     }
-  }, []);
+  };
+
+  const fetchMoodRecords = async () => {
+    try {
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth() + 1; // JavaScript month는 0부터 시작
+      console.log(`감정 기록 조회 시작: ${year}년 ${month}월`);
+      
+      const response = await fetch(`/api/mood/month?year=${year}&month=${month}`, {
+        credentials: 'include'
+      });
+      
+      console.log('API 응답 상태:', response.status);
+      
+      if (response.ok) {
+        const monthlyMoods = await response.json();
+        console.log('백엔드에서 받은 데이터:', monthlyMoods);
+        
+        // 백엔드에서 받은 데이터를 moodRecords 형태로 변환
+        const moodRecordsMap = {};
+        monthlyMoods.forEach(mood => {
+          const date = new Date(mood.date);
+          const dateKey = date.toDateString();
+          console.log(`날짜 변환: ${mood.date} -> ${dateKey}`);
+          
+          moodRecordsMap[dateKey] = {
+            id: getMoodId(mood.moodType),
+            emoji: getMoodEmoji(mood.moodType),
+            name: getMoodName(mood.moodType),
+            color: getMoodColor(mood.moodType)
+          };
+        });
+        
+        console.log('변환된 moodRecords:', moodRecordsMap);
+        setMoodRecords(moodRecordsMap);
+      } else {
+        console.error('API 호출 실패:', response.status, response.statusText);
+      }
+    } catch (error) {
+      console.error('감정 기록 가져오기 실패:', error);
+    }
+  };
+
+  // 감정 타입을 이모지로 변환
+  const getMoodEmoji = (moodType) => {
+    const moodMap = {
+      ANNOYED: "😤",
+      ANGRY: "😡",
+      TIRED: "😴",
+      SAD: "😢",
+      WORRIED: "😟",
+      BORED: "😒",
+      HAPPY: "😊",
+      CALM: "😌",
+      EXCITED: "😃",
+      PROUD: "😎",
+      THANKFUL: "😊"
+    };
+    return moodMap[moodType] || "😐";
+  };
+
+  // 감정 타입을 이름으로 변환
+  const getMoodName = (moodType) => {
+    const moodMap = {
+      ANNOYED: "짜증나요",
+      ANGRY: "화나요",
+      TIRED: "피곤해요",
+      SAD: "슬퍼요",
+      WORRIED: "걱정돼요",
+      BORED: "지루해요",
+      HAPPY: "행복해요",
+      CALM: "침착해요",
+      EXCITED: "신나요",
+      PROUD: "자랑스러워요",
+      THANKFUL: "감사해요"
+    };
+    return moodMap[moodType] || "보통";
+  };
+
+  // 감정 타입을 ID로 변환
+  const getMoodId = (moodType) => {
+    const moodMap = {
+      ANNOYED: "angry",
+      ANGRY: "mad",
+      TIRED: "tired",
+      SAD: "sad",
+      WORRIED: "worried",
+      BORED: "bored",
+      HAPPY: "happy",
+      CALM: "calm",
+      EXCITED: "excited",
+      PROUD: "proud",
+      THANKFUL: "grateful"
+    };
+    return moodMap[moodType] || "happy";
+  };
+
+  // 감정 타입을 색상으로 변환
+  const getMoodColor = (moodType) => {
+    const moodMap = {
+      ANNOYED: "#FF5A5A",
+      ANGRY: "#FF0000",
+      TIRED: "#808080",
+      SAD: "#800080",
+      WORRIED: "#FFA500",
+      BORED: "#008000",
+      HAPPY: "#FFD700",
+      CALM: "#4169E1",
+      EXCITED: "#FF69B4",
+      PROUD: "#4B0082",
+      THANKFUL: "#00FF00"
+    };
+    return moodMap[moodType] || "#FFD700";
+  };
 
   // 현재 월의 첫 번째 날과 마지막 날 계산
   const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
@@ -75,23 +195,69 @@ function MoodTracker() {
     setShowMoodSelector(true);
   };
 
-  const handleMoodSelect = (date, mood) => {
-    const dateKey = date.toDateString();
-    const newMoodRecords = {
-      ...moodRecords,
-      [dateKey]: mood
-    };
-    setMoodRecords(newMoodRecords);
-    localStorage.setItem('moodRecords', JSON.stringify(newMoodRecords));
+  const handleMoodSelect = async (date, mood) => {
+    try {
+      const dateString = formatDateToYYYYMMDD(date);
+      
+      // mood.id를 enum 값으로 변환
+      const moodEnumMap = {
+        angry: "ANNOYED",
+        mad: "ANGRY",
+        tired: "TIRED",
+        sad: "SAD",
+        worried: "WORRIED",
+        bored: "BORED",
+        happy: "HAPPY",
+        calm: "CALM",
+        excited: "EXCITED",
+        proud: "PROUD",
+        grateful: "THANKFUL"
+      };
+      
+      const response = await fetch('/api/mood', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          date: dateString,
+          moodType: moodEnumMap[mood.id] // mood.id를 enum 값으로 변환
+        })
+      });
+
+      if (response.ok) {
+        // 성공적으로 저장되면 로컬 상태 업데이트
+        const dateKey = date.toDateString();
+        const newMoodRecords = {
+          ...moodRecords,
+          [dateKey]: {
+            id: mood.id,
+            emoji: mood.emoji,
+            name: mood.name,
+            color: mood.color
+          }
+        };
+        setMoodRecords(newMoodRecords);
+        setShowMoodSelector(false);
+      } else {
+        console.error('감정 저장 실패');
+        alert('감정 저장에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('감정 저장 중 오류:', error);
+      alert('감정 저장 중 오류가 발생했습니다.');
+    }
   };
 
   const handleLogout = () => {
-    // 로그아웃 처리
-    localStorage.removeItem('onboardingCompleted');
-    localStorage.removeItem('userData');
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('moodRecords');
-    window.location.href = '/';
+    // 백엔드 로그아웃 호출
+    fetch('/logout', {
+      method: 'POST',
+      credentials: 'include'
+    }).finally(() => {
+      window.location.href = '/';
+    });
   };
 
   const isToday = (date) => {

@@ -32,16 +32,13 @@ function Dashboard() {
         const user = await response.json();
         setUserData(user);
         
-        // 로컬 스토리지에 사용자 정보 저장
-        localStorage.setItem('userData', JSON.stringify(user));
-        localStorage.setItem('isLoggedIn', 'true');
+
         
         // 신규 회원인지 확인
         if (user.isNewUser) {
           console.log('New user detected, checking onboarding status');
-          // 온보딩 완료 여부 확인
-          const onboardingCompleted = localStorage.getItem('onboardingCompleted');
-          if (onboardingCompleted !== 'true') {
+          // 온보딩 완료 여부를 백엔드에서 확인 (user.onboardingCompleted 필드 사용)
+          if (!user.onboardingCompleted) {
             console.log('Onboarding not completed, redirecting to onboarding');
             navigate('/onboarding');
             return;
@@ -63,12 +60,6 @@ function Dashboard() {
   };
 
   const handleLogout = () => {
-    // 로그아웃 처리
-    localStorage.removeItem('userData');
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('onboardingCompleted');
-    localStorage.removeItem('moodRecords');
-    
     // 백엔드 로그아웃 호출
     fetch('/logout', {
       method: 'POST',

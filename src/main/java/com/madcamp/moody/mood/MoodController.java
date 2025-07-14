@@ -13,6 +13,8 @@ import com.madcamp.moody.diary.Diary;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
 
 @RestController
 @RequestMapping("/api/mood")
@@ -32,22 +34,34 @@ public class MoodController {
             @RequestBody MoodRequestDTO request,
             @AuthenticationPrincipal OAuth2User oauth2User
     ) {
-        // 1. 로그인한 사용자 찾기
-        String oauthId = oauth2User.getAttribute("id").toString();
-        User user = userRepository.findByOauthId(oauthId);
+        try {
+            // 1. 로그인한 사용자 찾기
+            String oauthId = oauth2User.getAttribute("id").toString();
+            User user = userRepository.findByOauthId(oauthId);
+            
+            if (user == null) {
+                return ResponseEntity.status(404).body("사용자를 찾을 수 없습니다");
+            }
 
-        // 2. 감정 enum 변환
-        MoodType moodType = MoodType.valueOf(request.getMood());
+            // 2. 감정 enum 변환
+            MoodType moodType = MoodType.valueOf(request.getMoodType());
 
-        // 3. Mood 엔티티 생성 및 저장
-        Mood mood = new Mood();
-        mood.setUser(user);
-        mood.setMoodType(moodType);
-        mood.setDate(LocalDate.parse(request.getDate()));
+            // 3. Mood 엔티티 생성 및 저장
+            Mood mood = new Mood();
+            mood.setUser(user);
+            mood.setMoodType(moodType);
+            mood.setDate(LocalDate.parse(request.getDate()));
 
-        moodRepository.save(mood);
+            moodRepository.save(mood);
 
-        return ResponseEntity.ok().body("감정 기록 완료!");
+            return ResponseEntity.ok().body("감정 기록 완료!");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(400).body("잘못된 감정 타입입니다: " + request.getMoodType());
+        } catch (Exception e) {
+            System.err.println("Error in saveMood: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("서버 오류가 발생했습니다: " + e.getMessage());
+        }
     }
 
     @GetMapping("/{date}")
@@ -77,5 +91,31 @@ public class MoodController {
         result.put("diary", diary != null ? diary : null);
 
         return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/month")
+    public ResponseEntity<?> getMonthlyMoods(
+        @RequestParam int year,
+        @RequestParam int month,
+        @AuthenticationPrincipal OAuth2User oauth2User
+    ) {
+        String oauthId = oauth2User.getAttribute("id").toString();
+        User user = userRepository.findByOauthId(oauthId);
+
+        if (user == null) {
+            return ResponseEntity.status(404).body("User not found");
+        }
+
+        List<MoodDTO> moodDTOs = new ArrayList<>();
+        LocalDate startDate = LocalDate.of(year, month, 1);
+        LocalDate endDate = LocalDate.of(year, month, LocalDate.of(year, month, 1).lengthOfMonth());
+
+        List<Mood> moods = moodRepository.findByUserAndDateBetween(user, startDate, endDate);
+
+        for (Mood mood : moods) {
+            moodDTOs.add(new MoodDTO(mood));
+        }
+
+        return ResponseEntity.ok(moodDTOs);
     }
 }

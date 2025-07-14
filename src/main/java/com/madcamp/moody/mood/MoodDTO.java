@@ -15,9 +15,11 @@ public class MoodDTO {
     private String moodType;
     private String emoji;
     private String name;
+    private String date;
 
     public MoodDTO(Mood mood) {
         this.moodType = mood.getMoodType().name();
+        this.date = mood.getDate().toString(); // LocalDate를 String으로 변환
         switch (mood.getMoodType()) {
             case ANNOYED:
                 this.emoji = "😤"; this.name = "짜증나요"; break;

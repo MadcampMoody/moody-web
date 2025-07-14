@@ -13,5 +13,5 @@ import lombok.Setter;
 @Setter
 public class MoodRequestDTO {
     private String date; // "2024-07-14"
-    private String mood; // "HAPPY" 등
+    private String moodType; // "HAPPY" 등
 }

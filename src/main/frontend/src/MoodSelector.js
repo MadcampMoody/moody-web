@@ -1,13 +1,5 @@
 import { useState } from "react";
 import "./MoodSelector.css";
-import axios from "axios";
-
-function formatDateToYYYYMMDD(date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
 
 function MoodSelector({ selectedDate, onClose, onMoodSelect }) {
   const [selectedMood, setSelectedMood] = useState(null);
@@ -26,45 +18,14 @@ function MoodSelector({ selectedDate, onClose, onMoodSelect }) {
     { id: 'grateful', name: '감사해요', color: '#00FF00', emoji: '😊' }
   ];
 
-  // 한글 → 영문 enum 변환 맵
-  const moodEnumMap = {
-    angry: "ANNOYED",
-    mad: "ANGRY",
-    tired: "TIRED",
-    sad: "SAD",
-    worried: "WORRIED",
-    bored: "BORED",
-    happy: "HAPPY",
-    calm: "CALM",
-    excited: "EXCITED",
-    proud: "PROUD",
-    grateful: "THANKFUL"
-  };
-
   const handleMoodSelect = (mood) => {
     setSelectedMood(mood);
   };
 
-  const handleConfirm = async () => {
+  const handleConfirm = () => {
     if (selectedMood) {
-      // 1. 로컬 기록
+      // MoodTracker로 선택된 감정 전달 (백엔드 호출은 MoodTracker에서 처리)
       onMoodSelect(selectedDate, selectedMood);
-
-      // 2. 백엔드로 기록
-      try {
-        await axios.post(
-          "/api/mood",
-          {
-            date: formatDateToYYYYMMDD(selectedDate),
-            mood: moodEnumMap[selectedMood.id]
-          },
-          { withCredentials: true }
-        );
-        // 성공 알림 등 추가 가능
-      } catch (e) {
-        alert("서버에 감정 기록 저장 실패: " + (e.response?.data?.message || e.message));
-      }
-
       onClose();
     }
   };

@@ -36,6 +36,9 @@ public class User extends BaseEntity {
     @Column(name = "music_genres", columnDefinition = "TEXT")
     private String musicGenres; // JSON 형태로 여러 장르 저장
     
+    @Column(name = "onboarding_completed", nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private boolean onboardingCompleted = false;
+    
     // 음악 장르 목록을 가져오는 헬퍼 메서드
     public List<String> getMusicGenresList() {
         if (musicGenres == null || musicGenres.isEmpty()) {

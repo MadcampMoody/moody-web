@@ -82,6 +82,7 @@ public class AuthController {
             userInfo.put("email", user.getEmail());
             userInfo.put("oauthId", user.getOauthId());
             userInfo.put("isNewUser", isNewUser);
+            userInfo.put("onboardingCompleted", user.isOnboardingCompleted());
 
             System.out.println("Returning user info: " + userInfo);
             return ResponseEntity.ok(userInfo);
@@ -212,6 +213,9 @@ public class AuthController {
                 return ResponseEntity.status(404).body(Map.of("error", "사용자를 찾을 수 없습니다"));
             }
 
+            // 온보딩 완료 표시
+            user.setOnboardingCompleted(true);
+            
             // 온보딩 데이터 업데이트
             String nickname = (String) onboardingData.get("nickname");
             if (nickname != null && !nickname.trim().isEmpty()) {

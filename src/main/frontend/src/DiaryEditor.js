@@ -135,10 +135,6 @@ function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, o
     try {
       await axios.post('/api/diary/delete', { diaryId: diary.id }, { withCredentials: true });
 
-      // === 여기에서 localStorage 데이터도 삭제 ===
-      localStorage.removeItem(`mood-${selectedDate}`);
-      localStorage.removeItem(`diary-${selectedDate}`);
-
       // 삭제 후 페이지 이동 또는 상태 초기화
       window.location.href = "/dashboard";
     } catch (e) {
