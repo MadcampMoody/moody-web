@@ -7,6 +7,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.*;
+import com.madcamp.moody.diary.DiaryRepository;
+import com.madcamp.moody.diary.Diary;
 
 import java.time.LocalDate;
 import java.util.HashMap;
@@ -21,6 +23,9 @@ public class MoodController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private DiaryRepository diaryRepository;
 
     @PostMapping
     public ResponseEntity<?> saveMood(
@@ -60,12 +65,16 @@ public class MoodController {
         // 감정 조회
         Mood mood = moodRepository.findByUserAndDate(user, LocalDate.parse(date));
         // 일기 조회 (Diary 테이블이 있다면)
-        // Diary diary = diaryRepository.findByUserAndDate(user, LocalDate.parse(date));
+        Diary diary = null;
+
+        if (mood != null) {
+            diary = diaryRepository.findByMood(mood);
+        }
 
         // 임시로 일기 내용은 빈 문자열로 반환
         Map<String, Object> result = new HashMap<>();
         result.put("mood", mood != null ? new MoodDTO(mood) : null);
-        result.put("diary", "");
+        result.put("diary", diary != null ? diary.getContent() : "");
 
         return ResponseEntity.ok(result);
     }

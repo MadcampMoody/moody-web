@@ -8,6 +8,7 @@ function DiaryEditorWrapper() {
   const [loading, setLoading] = useState(true);
   const [mood, setMood] = useState(null);
   const [initialContent, setInitialContent] = useState("");
+  const [diary, setDiary] = useState(null); 
 
   useEffect(() => {
     setLoading(true);
@@ -15,7 +16,7 @@ function DiaryEditorWrapper() {
       .then(res => {
         // 감정 enum → 이모티콘/이름 매핑
         const moodMap = {
-          ANNOYED: { emoji: "��", name: "짜증나요" },
+          ANNOYED: { emoji: "😤", name: "짜증나요" },
           ANGRY: { emoji: "😡", name: "화나요" },
           TIRED: { emoji: "😴", name: "피곤해요" },
           SAD: { emoji: "😢", name: "슬퍼요" },
@@ -33,11 +34,23 @@ function DiaryEditorWrapper() {
           : null;
 
         setMood(mood); // 백엔드에서 감정 정보 반환
-        setInitialContent(res.data.diary); // 백엔드에서 일기 내용 반환
+
+        // diary가 객체라면 content만 추출, 없으면 빈 문자열
+        if (res.data.diary && typeof res.data.diary === "object") {
+            setInitialContent(res.data.diary.content || "");
+            setDiary(res.data.diary); // diary 객체 저장
+          } else if (typeof res.data.diary === "string") {
+            setInitialContent(res.data.diary);
+            setDiary(null); // diary 없음
+          } else {
+            setInitialContent("");
+            setDiary(null);
+          }
       })
       .catch(err => {
         setMood(null);
         setInitialContent("");
+        setDiary(null);
       })
       .finally(() => setLoading(false));
   }, [date]);
@@ -49,6 +62,7 @@ function DiaryEditorWrapper() {
       selectedDate={date}
       selectedMood={mood}
       initialContent={initialContent}
+      diary={diary}
       // onSave, onCancel 등 props 전달
     />
   );

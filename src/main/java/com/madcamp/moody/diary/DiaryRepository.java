@@ -10,4 +10,5 @@ public interface DiaryRepository extends JpaRepository<Diary, Long> {
     Diary findByUserAndMood(User user, Mood mood);
     // 또는 날짜로 찾고 싶으면
     // Diary findByUserAndDate(User user, LocalDate date);
+    Diary findByMood(Mood mood);
 }
