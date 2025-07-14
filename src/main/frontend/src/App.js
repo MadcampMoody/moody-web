@@ -4,8 +4,8 @@ import "./App.css";
 import Onboarding from "./Onboarding";
 import Dashboard from "./Dashboard";
 import MusicRecommendPage from "./components/MusicRecommendPage";
-import DiaryEditor from "./DiaryEditor";
 import DiaryEditorWrapper from "./DiaryEditorWrapper";
+
 
 function App() {
   const [error, setError] = useState('');

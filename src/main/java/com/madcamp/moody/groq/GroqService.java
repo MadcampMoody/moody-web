@@ -31,6 +31,11 @@ import com.madcamp.moody.user.UserRepository;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import java.util.Collections;
 import com.madcamp.moody.music.MusicRegion;
+import com.madcamp.moody.mood.Mood;
+import com.madcamp.moody.mood.MoodRepository;
+import java.time.LocalDate;
+import java.util.Optional;
+
 
 @Service
 public class GroqService {
@@ -46,14 +51,16 @@ public class GroqService {
     private final PlaylistService playlistService;
     private final MusicService musicService;
     private final UserRepository userRepository;
+    private final MoodRepository moodRepository;
     
     @Autowired
-    public GroqService(RestTemplate restTemplate, SpotifyService spotifyService, PlaylistService playlistService, MusicService musicService, UserRepository userRepository) {
+    public GroqService(RestTemplate restTemplate, SpotifyService spotifyService, PlaylistService playlistService, MusicService musicService, UserRepository userRepository, MoodRepository moodRepository) {
         this.restTemplate = restTemplate;
         this.spotifyService = spotifyService;
         this.playlistService = playlistService;
         this.musicService = musicService;
         this.userRepository = userRepository;
+        this.moodRepository = moodRepository;
     }
     
     public GroqDTO.SimpleResponse generateContent(String prompt) {
@@ -338,12 +345,28 @@ public class GroqService {
     }
     
     // 텍스트 분석 + 음악 추천 (Playlist Search API 사용)
-    public GroqDTO.MusicAnalysisResponse analyzeTextAndRecommendMusic(String text, OAuth2User oAuth2User) {
+    public GroqDTO.MusicAnalysisResponse analyzeTextAndRecommendMusic(String text, String date, OAuth2User oAuth2User) {
         // OAuth2User에서 User 엔티티 조회
         String oauthId = String.valueOf(oAuth2User.getAttributes().get("id"));
         User user = userRepository.findByOauthId(oauthId);
         if (user == null) {
             throw new IllegalArgumentException("사용자를 찾을 수 없습니다.");
+        }
+
+        String analysisText = text;
+        if (analysisText == null || analysisText.trim().isEmpty()) {
+            if (date != null && !date.trim().isEmpty()) {
+                LocalDate localDate = LocalDate.parse(date);
+                Optional<Mood> moodOptional = Optional.ofNullable(moodRepository.findByUserAndDate(user, localDate));
+                if (moodOptional.isPresent()) {
+                    // MoodType enum을 설명적인 텍스트로 변환 (예: "Happy")
+                    analysisText = "Today's mood is " + moodOptional.get().getMoodType().name().toLowerCase() + ".";
+                } else {
+                    analysisText = "a normal day"; // 해당 날짜에 기분이 없으면 기본값
+                }
+            } else {
+                 analysisText = "a normal day"; // 날짜 정보도 없으면 기본값
+            }
         }
 
         // 0. 사용자 선호 장르 선택
@@ -354,7 +377,7 @@ public class GroqService {
         }
 
         // 1. 텍스트 분석하여 장르와 키워드 추출
-        GroqDTO.SpotifyAnalysisResult analysisResult = analyzeTextForSpotifySearch(text, selectedUserGenre);
+        GroqDTO.SpotifyAnalysisResult analysisResult = analyzeTextForSpotifySearch(analysisText, selectedUserGenre);
 
         // 2. Spotify에서 음악 추천 받기
         MusicRegion region = user.getMusicRegion() != null ? user.getMusicRegion() : MusicRegion.BOTH;
@@ -385,6 +408,12 @@ public class GroqService {
                 if (artistName == null || artistName.isEmpty()) {
                     continue;
                 }
+
+                // instrumental 트랙 건너뛰기
+                if (track.getTitle() != null && track.getTitle().toLowerCase().contains("instrumental")) {
+                    continue;
+                }
+                
                 String primaryArtist = artistName.split(",|ft\\.|feat\\.|&")[0].trim().toLowerCase();
                 if (processedArtists.add(primaryArtist)) {
                     recommendedTracks.add(new GroqDTO.MusicAnalysisResponse.RecommendedTrack(
@@ -422,26 +451,22 @@ public class GroqService {
         }
 
         // 4. DB에 플레이리스트와 음악 저장
-        if (!recommendedTracks.isEmpty()) {
-            // 4.1. Playlist 생성 및 저장
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-            String title = LocalDateTime.now().format(formatter) + "의 플레이리스트";
-            
-            // playlist 생성 시 diaryId가 필요하므로 user의 id를 임시로 사용
-            PlaylistDTO newPlaylistInfo = new PlaylistDTO(title, user.getId());
-            PlaylistDTO savedPlaylist = playlistService.createPlaylist(newPlaylistInfo);
+        String title = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")) + "의 플레이리스트";
+        
+        // playlist 생성 시 diaryId가 필요하므로 user의 id를 임시로 사용
+        PlaylistDTO newPlaylistInfo = new PlaylistDTO(title, user.getId());
+        PlaylistDTO savedPlaylist = playlistService.createPlaylist(newPlaylistInfo);
 
-            // 4.2. Music 목록 생성 및 저장
-            List<MusicDTO> musicToSave = new ArrayList<>();
-            for (GroqDTO.MusicAnalysisResponse.RecommendedTrack track : recommendedTracks) {
-                MusicDTO musicDTO = new MusicDTO(0L, track.getSpotifyUrl(), savedPlaylist.getPlaylistId());
-                musicDTO.setUserId(user.getId()); // 사용자 ID 설정
-                musicToSave.add(musicDTO);
-            }
-            musicService.createMusics(musicToSave);
+        // 4.2. Music 목록 생성 및 저장
+        List<MusicDTO> musicToSave = new ArrayList<>();
+        for (GroqDTO.MusicAnalysisResponse.RecommendedTrack track : recommendedTracks) {
+            MusicDTO musicDTO = new MusicDTO(0L, track.getSpotifyUrl(), savedPlaylist.getPlaylistId());
+            musicDTO.setUserId(user.getId()); // 사용자 ID 설정
+            musicToSave.add(musicDTO);
         }
+        musicService.createMusics(musicToSave);
 
         // 5. 최종 결과 반환
-        return new GroqDTO.MusicAnalysisResponse(analysisResult, recommendedTracks);
+        return new GroqDTO.MusicAnalysisResponse(analysisResult, recommendedTracks, savedPlaylist.getTitle());
     }
 } 
