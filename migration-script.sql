@@ -32,6 +32,14 @@ CREATE TABLE IF NOT EXISTS playlist (
 
 -- (필요 시) 다른 테이블들도 여기에 추가...
 
+-- 플레이리스트 테이블에 date 컬럼 추가 (어느 날짜의 일기를 기반으로 생성되었는지 구분)
+ALTER TABLE playlist ADD COLUMN date DATE;
+
+-- 기존 데이터의 date 컬럼을 created_at의 날짜 부분으로 업데이트
+UPDATE playlist SET date = DATE(created_at) WHERE date IS NULL;
+
+-- date 컬럼을 NOT NULL로 설정
+ALTER TABLE playlist MODIFY COLUMN date DATE NOT NULL;
 
 -- 4. 설정 확인
 --    아래 명령어로 테이블이 잘 생성되었는지 확인합니다.

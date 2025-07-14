@@ -1,11 +1,13 @@
 package com.madcamp.moody.playlist;
 
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 public class PlaylistDTO {
     private Long playlistId;
     private String title;
     private Long diaryId;
+    private LocalDate date;
     private LocalDateTime createdAt;
 
     // 기본 생성자
@@ -18,11 +20,19 @@ public class PlaylistDTO {
         this.diaryId = diaryId;
     }
 
+    // 생성자 (date 포함)
+    public PlaylistDTO(String title, Long diaryId, LocalDate date) {
+        this.title = title;
+        this.diaryId = diaryId;
+        this.date = date;
+    }
+
     // 모든 필드 생성자
-    public PlaylistDTO(Long playlistId, String title, Long diaryId, LocalDateTime createdAt) {
+    public PlaylistDTO(Long playlistId, String title, Long diaryId, LocalDate date, LocalDateTime createdAt) {
         this.playlistId = playlistId;
         this.title = title;
         this.diaryId = diaryId;
+        this.date = date;
         this.createdAt = createdAt;
     }
 
@@ -32,6 +42,7 @@ public class PlaylistDTO {
             playlist.getPlaylistId(),
             playlist.getTitle(),
             playlist.getDiaryId(),
+            playlist.getDate(),
             playlist.getCreatedAt()
         );
     }
@@ -42,6 +53,7 @@ public class PlaylistDTO {
         playlist.setPlaylistId(this.playlistId);
         playlist.setTitle(this.title);
         playlist.setDiaryId(this.diaryId);
+        playlist.setDate(this.date);
         if (this.createdAt != null) {
             playlist.setCreatedAt(this.createdAt);
         }
@@ -73,6 +85,14 @@ public class PlaylistDTO {
         this.diaryId = diaryId;
     }
 
+    public LocalDate getDate() {
+        return date;
+    }
+
+    public void setDate(LocalDate date) {
+        this.date = date;
+    }
+
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
@@ -87,6 +107,7 @@ public class PlaylistDTO {
                 "playlistId=" + playlistId +
                 ", title='" + title + '\'' +
                 ", diaryId=" + diaryId +
+                ", date=" + date +
                 ", createdAt=" + createdAt +
                 '}';
     }

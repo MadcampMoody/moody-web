@@ -32,4 +32,7 @@ public interface PlaylistRepository extends JpaRepository<Playlist, Long> {
 
     // playlist_id와 diary_id로 찾기 (소유권 확인용)
     Optional<Playlist> findByPlaylistIdAndDiaryId(Long playlistId, Long diaryId);
+    
+    // 사용자 ID와 날짜로 플레이리스트 찾기
+    List<Playlist> findByDiaryIdAndDate(Long diaryId, java.time.LocalDate date);
 } 

@@ -1,5 +1,6 @@
 package com.madcamp.moody.playlist;
 
+import com.madcamp.moody.music.MusicRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,10 +14,12 @@ import java.util.stream.Collectors;
 public class PlaylistService {
 
     private final PlaylistRepository playlistRepository;
+    private final MusicRepository musicRepository;
 
     @Autowired
-    public PlaylistService(PlaylistRepository playlistRepository) {
+    public PlaylistService(PlaylistRepository playlistRepository, MusicRepository musicRepository) {
         this.playlistRepository = playlistRepository;
+        this.musicRepository = musicRepository;
     }
 
     // 모든 playlist 조회
@@ -69,8 +72,35 @@ public class PlaylistService {
             throw new IllegalArgumentException("해당 다이어리에 동일한 제목의 플레이리스트가 이미 존재합니다.");
         }
 
-        Playlist playlist = new Playlist(playlistDTO.getTitle(), playlistDTO.getDiaryId());
+        Playlist playlist = new Playlist(playlistDTO.getTitle(), playlistDTO.getDiaryId(), playlistDTO.getDate());
         Playlist savedPlaylist = playlistRepository.save(playlist);
+        return PlaylistDTO.fromEntity(savedPlaylist);
+    }
+
+    // playlist 생성 또는 업데이트 (같은 날짜에 기존 플레이리스트가 있으면 덮어씀)
+    public PlaylistDTO createOrUpdatePlaylist(PlaylistDTO playlistDTO) {
+        System.out.println("createOrUpdatePlaylist 호출: diaryId=" + playlistDTO.getDiaryId() + ", date=" + playlistDTO.getDate());
+        
+        // 같은 날짜에 기존 플레이리스트가 있는지 확인
+        List<Playlist> existingPlaylists = playlistRepository.findByDiaryIdAndDate(playlistDTO.getDiaryId(), playlistDTO.getDate());
+        
+        if (!existingPlaylists.isEmpty()) {
+            System.out.println("기존 플레이리스트 발견: " + existingPlaylists.size() + "개");
+            // 기존 플레이리스트가 있으면 모두 삭제 (음악도 함께 삭제됨)
+            for (Playlist existingPlaylist : existingPlaylists) {
+                System.out.println("기존 플레이리스트 삭제: playlistId=" + existingPlaylist.getPlaylistId());
+                // 연관된 음악들 먼저 삭제
+                musicRepository.deleteByPlaylistId(existingPlaylist.getPlaylistId());
+                // 플레이리스트 삭제
+                playlistRepository.deleteById(existingPlaylist.getPlaylistId());
+            }
+        }
+        
+        // 새 플레이리스트 생성
+        Playlist playlist = new Playlist(playlistDTO.getTitle(), playlistDTO.getDiaryId(), playlistDTO.getDate());
+        Playlist savedPlaylist = playlistRepository.save(playlist);
+        System.out.println("새 플레이리스트 생성: playlistId=" + savedPlaylist.getPlaylistId());
+        
         return PlaylistDTO.fromEntity(savedPlaylist);
     }
 
@@ -111,5 +141,14 @@ public class PlaylistService {
     @Transactional(readOnly = true)
     public boolean isPlaylistOwnedByDiary(Long playlistId, Long diaryId) {
         return playlistRepository.findByPlaylistIdAndDiaryId(playlistId, diaryId).isPresent();
+    }
+    
+    // 사용자 ID와 날짜로 플레이리스트 조회
+    @Transactional(readOnly = true)
+    public List<PlaylistDTO> getPlaylistsByUserAndDate(Long userId, java.time.LocalDate date) {
+        return playlistRepository.findByDiaryIdAndDate(userId, date)
+                .stream()
+                .map(PlaylistDTO::fromEntity)
+                .collect(Collectors.toList());
     }
 } 
