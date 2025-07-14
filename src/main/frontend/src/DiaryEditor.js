@@ -75,10 +75,23 @@ function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, o
 
   // 삭제 핸들러
   const handleDelete = async () => {
+    if (!diary || !diary.id) {
+      alert("삭제할 일기 정보가 없습니다.");
+      return;
+    }
     if (!window.confirm("정말 삭제하시겠습니까?")) return;
-    await axios.post('/api/diary/delete', { diaryId: diary.id }, { withCredentials: true });
-    // 삭제 후 페이지 이동 또는 상태 초기화
-    window.location.href = "/dashboard"; // 예시
+    try {
+      await axios.post('/api/diary/delete', { diaryId: diary.id }, { withCredentials: true });
+
+      // === 여기에서 localStorage 데이터도 삭제 ===
+      localStorage.removeItem(`mood-${selectedDate}`);
+      localStorage.removeItem(`diary-${selectedDate}`);
+
+      // 삭제 후 페이지 이동 또는 상태 초기화
+      window.location.href = "/dashboard";
+    } catch (e) {
+      alert("삭제 중 오류가 발생했습니다.");
+    }
   };
 
   return (
@@ -98,7 +111,7 @@ function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, o
           )}
         </div>
         {/* 드롭다운 (오른쪽) */}
-        {content && (
+        {diary && content && (
           <div style={{ position: "absolute", top: 20, right: 20 }}>
             <button onClick={() => setShowDropdown(v => !v)}>⋮</button>
             {showDropdown && (

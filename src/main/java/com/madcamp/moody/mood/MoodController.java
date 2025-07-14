@@ -74,7 +74,7 @@ public class MoodController {
         // 임시로 일기 내용은 빈 문자열로 반환
         Map<String, Object> result = new HashMap<>();
         result.put("mood", mood != null ? new MoodDTO(mood) : null);
-        result.put("diary", diary != null ? diary.getContent() : "");
+        result.put("diary", diary != null ? diary : null);
 
         return ResponseEntity.ok(result);
     }

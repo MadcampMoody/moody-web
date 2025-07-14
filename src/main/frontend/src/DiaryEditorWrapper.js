@@ -35,17 +35,21 @@ function DiaryEditorWrapper() {
 
         setMood(mood); // 백엔드에서 감정 정보 반환
 
-        // diary가 객체라면 content만 추출, 없으면 빈 문자열
+        console.log("백엔드에서 받은 diary:", res.data.diary);
+        console.log("diary의 타입:", typeof res.data.diary);
         if (res.data.diary && typeof res.data.diary === "object") {
-            setInitialContent(res.data.diary.content || "");
-            setDiary(res.data.diary); // diary 객체 저장
-          } else if (typeof res.data.diary === "string") {
-            setInitialContent(res.data.diary);
-            setDiary(null); // diary 없음
-          } else {
-            setInitialContent("");
-            setDiary(null);
-          }
+          console.log("diary 객체의 내용:", res.data.diary);
+          setInitialContent(res.data.diary.content || "");
+          setDiary(res.data.diary); // diary 객체 저장
+        } else if (typeof res.data.diary === "string") {
+          console.log("diary가 문자열로 옴:", res.data.diary);
+          setInitialContent(res.data.diary);
+          setDiary(null); // diary 없음
+        } else {
+          console.log("diary가 null 또는 undefined임");
+          setInitialContent("");
+          setDiary(null);
+        }
       })
       .catch(err => {
         setMood(null);

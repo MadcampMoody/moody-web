@@ -11,6 +11,7 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/diary")
@@ -44,5 +45,20 @@ public class DiaryController {
         diaryRepository.save(diary);
 
         return ResponseEntity.ok().body("일기 저장 완료!");
+    }
+
+    @PostMapping("/delete")
+    public ResponseEntity<?> deleteDiaryAndMood(@RequestBody Map<String, Long> body) {
+        Long diaryId = body.get("diaryId");
+        Diary diary = diaryRepository.findById(diaryId).orElse(null);
+        if (diary == null) {
+            return ResponseEntity.status(404).body("Diary not found");
+        }
+        Mood mood = diary.getMood();
+        diaryRepository.delete(diary);
+        if (mood != null) {
+            moodRepository.delete(mood);
+        }
+        return ResponseEntity.ok("Deleted");
     }
 }
