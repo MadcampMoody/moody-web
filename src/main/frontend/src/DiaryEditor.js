@@ -9,31 +9,81 @@ function DiaryEditor({ selectedDate, selectedMood, initialContent = "", onCancel
   const [recommendedTracks, setRecommendedTracks] = useState([]);
   const [playlistTitle, setPlaylistTitle] = useState('');
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState(null);
   const [userName, setUserName] = useState('사용자');
   const playlistRef = useRef(null);
 
-  // 사용자 정보 가져오기
+  // 사용자 정보 가져오기 및 기존 플레이리스트 조회 (병렬 처리)
   useEffect(() => {
-    const fetchUserInfo = async () => {
+    const fetchData = async () => {
         try {
-            const response = await axios.get('/api/user/me', { withCredentials: true });
-            if (response.data) {
-                setUserName(response.data.name || '사용자');
+            // 사용자 정보와 플레이리스트 조회를 병렬로 처리
+            const userInfoPromise = axios.get('/api/auth/user', { withCredentials: true });
+            
+            // 사용자 정보 먼저 처리
+            const userResponse = await userInfoPromise;
+            
+            if (userResponse.data) {
+                setUserName(userResponse.data.name || '사용자');
+                
+                // 해당 날짜의 기존 플레이리스트 조회
+                if (selectedDate && userResponse.data.id) {
+                    console.log(`기존 플레이리스트 조회 시작: 사용자 ID ${userResponse.data.id}, 날짜 ${selectedDate}`);
+                    
+                    // 플레이리스트 조회를 즉시 시작
+                    const playlistResponse = await axios.get(
+                        `/api/playlists/user/${userResponse.data.id}/date/${selectedDate}`, 
+                        { withCredentials: true }
+                    );
+                    
+                    console.log('플레이리스트 응답:', playlistResponse.data);
+                    
+                    if (playlistResponse.data && playlistResponse.data.musicList && playlistResponse.data.musicList.length > 0) {
+                        console.log('기존 플레이리스트 발견, 표시 중...');
+                        // 기존 플레이리스트가 있다면 표시
+                        const tracks = playlistResponse.data.musicList.map(music => ({
+                            trackId: music.musicUrl.split('/track/')[1]?.split('?')[0],
+                            title: "Spotify Track",
+                            artist: "Artist",
+                            spotifyUrl: music.musicUrl,
+                            previewUrl: null
+                        }));
+                        setRecommendedTracks(tracks);
+                        setPlaylistTitle(playlistResponse.data.playlistTitle || `${selectedDate}의 플레이리스트`);
+                    } else {
+                        console.log('해당 날짜에 기존 플레이리스트 없음');
+                    }
+                }
             }
         } catch (error) {
-            console.error('사용자 정보 로딩 실패:', error);
+            console.error('데이터 로딩 실패:', error);
+        } finally {
+            setInitialLoading(false);
         }
     };
-    fetchUserInfo();
-  }, []);
+    
+    if (selectedDate) {
+        fetchData();
+    }
+  }, [selectedDate]);
 
-  // 추천 결과가 로드되면 해당 위치로 스크롤
+  // 추천 결과가 로드되면 해당 위치로 스크롤 (기존 플레이리스트일 때는 부드럽게, 새 추천일 때는 즉시)
   useEffect(() => {
     if (recommendedTracks.length > 0 && playlistRef.current) {
-        playlistRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // 로딩 상태가 아닐 때는 기존 플레이리스트이므로 부드럽게 스크롤
+        // 로딩 상태일 때는 새로운 추천이므로 약간의 지연 후 스크롤
+        if (!loading) {
+            playlistRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+            setTimeout(() => {
+                if (playlistRef.current) {
+                    playlistRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }, 100);
+        }
     }
-  }, [recommendedTracks]);
+  }, [recommendedTracks, loading]);
 
 
   // 날짜 포맷 함수
@@ -63,7 +113,9 @@ function DiaryEditor({ selectedDate, selectedMood, initialContent = "", onCancel
       );
       
       setRecommendedTracks(response.data.tracks || []);
-      setPlaylistTitle(response.data.playlistTitle || '나를 위한 무드 플레이리스트');
+      // 날짜 기반 플레이리스트 제목 생성
+      const formattedDate = selectedDate || new Date().toISOString().split('T')[0];
+      setPlaylistTitle(`${formattedDate}의 플레이리스트`);
 
     } catch (e) {
       setError("요청 처리 중 오류가 발생했습니다: " + (e.response?.data?.message || e.message));
@@ -109,6 +161,12 @@ function DiaryEditor({ selectedDate, selectedMood, initialContent = "", onCancel
       </div>
 
       {error && <p className="error-message" style={{color: 'red', marginTop: '20px', textAlign: 'center'}}>{error}</p>}
+
+      {initialLoading && (
+        <div style={{textAlign: 'center', marginTop: '20px', color: '#666'}}>
+          기존 플레이리스트 확인 중...
+        </div>
+      )}
 
       {recommendedTracks.length > 0 && (
           <div ref={playlistRef} className="playlist-container" style={{marginTop: '30px', width: '100%'}}>

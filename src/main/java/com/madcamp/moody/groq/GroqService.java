@@ -143,6 +143,7 @@ public class GroqService {
                 "🎯 **추천 철학**:\n" +
                 "- 글의 텍스트에서 느껴지는 감정, 분위기, 그리고 **상황적 맥락(계절, 기념일, 이벤트 등)**을 정확히 파악하여 음악적 경험을 제공합니다.\n" +
                 "- **특히, 크리스마스, 연말, 휴가 등 명확한 상황적 맥락이 있다면, 해당 분위기에 어울리는 장르(예: Christmas, Carol, Jazz)를 반드시 최우선으로 고려하고 포함해야 합니다.**\n" +
+                "- **특히, 특정 가수의 이름이 맥락에 포함되어 있다면, 해당 가수의 음악이나 장르를 반드시 최우선으로 고려하고 포함해야 합니다.**\n" +
                 "- 감정에 공감하는 음악, 기분을 전환하는 음악, 새로운 에너지를 주는 음악 등 다양한 접근을 시도합니다.\n" +
                 "- 예상치 못한 창의적인 장르 조합과 독특한 키워드 선택을 통해 특별한 플레이리스트를 구성합니다.\n\n" +
 
@@ -387,6 +388,9 @@ public class GroqService {
                 region
         );
 
+        // 사용자가 이전에 추천받은 모든 트랙 ID 조회
+        Set<String> previouslyRecommendedTrackIds = new HashSet<>(musicService.findTrackIdsByUserId(user.getId()));
+
         // 3. 응답 변환 및 아티스트 중복 제거 (10곡 보장 로직)
         Set<String> processedArtists = new HashSet<>();
         List<GroqDTO.MusicAnalysisResponse.RecommendedTrack> recommendedTracks = new ArrayList<>();
@@ -404,6 +408,12 @@ public class GroqService {
                 if (recommendedTracks.size() >= 10) {
                     break;
                 }
+
+                // 이전에 추천된 곡인지 확인
+                if (previouslyRecommendedTrackIds.contains(track.getTrackId())) {
+                    continue;
+                }
+
                 String artistName = track.getArtist();
                 if (artistName == null || artistName.isEmpty()) {
                     continue;
@@ -451,11 +461,24 @@ public class GroqService {
         }
 
         // 4. DB에 플레이리스트와 음악 저장
-        String title = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")) + "의 플레이리스트";
+        // 날짜 파싱 - 안전장치 추가
+        LocalDate playlistDate;
+        try {
+            if (date != null && !date.trim().isEmpty()) {
+                playlistDate = LocalDate.parse(date);
+            } else {
+                playlistDate = LocalDate.now(); // 날짜가 없으면 현재 날짜 사용
+            }
+        } catch (Exception e) {
+            System.err.println("날짜 파싱 오류: " + e.getMessage() + ", 현재 날짜를 사용합니다.");
+            playlistDate = LocalDate.now();
+        }
         
-        // playlist 생성 시 diaryId가 필요하므로 user의 id를 임시로 사용
-        PlaylistDTO newPlaylistInfo = new PlaylistDTO(title, user.getId());
-        PlaylistDTO savedPlaylist = playlistService.createPlaylist(newPlaylistInfo);
+        String title = playlistDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) + "의 플레이리스트";
+        
+        // playlist 생성 또는 업데이트 (같은 날짜에 기존 플레이리스트가 있으면 덮어씀)
+        PlaylistDTO newPlaylistInfo = new PlaylistDTO(title, user.getId(), playlistDate);
+        PlaylistDTO savedPlaylist = playlistService.createOrUpdatePlaylist(newPlaylistInfo);
 
         // 4.2. Music 목록 생성 및 저장
         List<MusicDTO> musicToSave = new ArrayList<>();
