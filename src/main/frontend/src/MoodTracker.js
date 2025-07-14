@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import "./MoodTracker.css";
 import MoodSelector from "./MoodSelector";
+import { useNavigate } from "react-router-dom";
 
 function MoodTracker() {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -8,6 +9,7 @@ function MoodTracker() {
   const [userData, setUserData] = useState(null);
   const [showMoodSelector, setShowMoodSelector] = useState(false);
   const [moodRecords, setMoodRecords] = useState({});
+  const navigate = useNavigate();
 
   useEffect(() => {
     // 로컬 스토리지에서 사용자 데이터 가져오기
@@ -59,11 +61,13 @@ function MoodTracker() {
   };
 
   const handleDateClick = (date) => {
-    // 이미 선택된 날짜를 다시 클릭하면 선택 취소
-    if (selectedDate && date.toDateString() === selectedDate.toDateString()) {
-      setSelectedDate(null);
+    const dateKey = date.toDateString();
+    // 감정이 등록된 날짜만 일기장으로 이동
+    if (moodRecords[dateKey]) {
+      // 예: React Router 사용 시
+      navigate(`/diary/${formatDateToYYYYMMDD(date)}`);
     } else {
-      setSelectedDate(date);
+      setSelectedDate(date); // 기존 선택 로직
     }
   };
 
@@ -106,6 +110,22 @@ function MoodTracker() {
   const getMoodForDate = (date) => {
     const dateKey = date.toDateString();
     return moodRecords[dateKey];
+  };
+
+  const isFutureDate = (date) => {
+    const today = new Date();
+    // 시/분/초/밀리초 제거
+    today.setHours(0, 0, 0, 0);
+    const compareDate = new Date(date);
+    compareDate.setHours(0, 0, 0, 0);
+    return compareDate > today;
+  };
+
+  const formatDateToYYYYMMDD = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
   };
 
   return (
@@ -184,10 +204,20 @@ function MoodTracker() {
           <h3>
             {selectedDate.getFullYear()}년 {selectedDate.getMonth() + 1}월 {selectedDate.getDate()}일
           </h3>
-          <button className="add-mood-btn" onClick={handleAddMoodClick}>
+          <button
+            className="add-mood-btn"
+            onClick={handleAddMoodClick}
+            disabled={isFutureDate(selectedDate)} // 미래면 비활성화
+            style={isFutureDate(selectedDate) ? { opacity: 0.5, cursor: "not-allowed" } : {}}
+          >
             <span className="plus-icon">+</span>
             <span className="btn-text">감정 기록하기</span>
           </button>
+          {isFutureDate(selectedDate) && (
+            <div style={{ color: "red", marginTop: "8px", fontSize: "13px" }}>
+              미래 날짜에는 감정을 기록할 수 없습니다.
+            </div>
+          )}
         </div>
       )}
 
