@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.Collections;
 import org.springframework.beans.factory.annotation.Autowired;
+import com.madcamp.moody.music.MusicRegion;
 import java.util.ArrayList;
 import java.util.Set;
 import java.util.HashSet;
@@ -106,7 +107,7 @@ public class SpotifyService {
     }
 
     // 장르와 키워드로 플레이리스트 검색 후, 해당 플레이리스트의 트랙들을 가져오는 로직
-    public SpotifyDTO.MusicRecommendation recommendMusicViaPlaylistSearch(List<String> genres, List<String> keywords) {
+    public SpotifyDTO.MusicRecommendation recommendMusicViaPlaylistSearch(List<String> genres, List<String> keywords, MusicRegion region) {
         try {
             String accessToken = getAccessToken();
             if (accessToken == null) {
@@ -115,35 +116,39 @@ public class SpotifyService {
             }
 
             List<SpotifyDTO.MusicRecommendation.RecommendedTrack> finalTracks = new ArrayList<>();
-            Set<String> usedArtists = new HashSet<>(); // 중복 아티스트 방지
+            Set<String> usedArtists = new HashSet<>();
             String keywordString = String.join(" ", keywords);
-            
-            // 각 장르별 목표 곡 수 설정
-            int[] targetCounts = {4, 3, 3}; // 첫번째 장르 4곡, 두번째/세번째 장르 각 3곡
 
-            // 각 장르별로 개별 검색하여 다양한 음악 추천
-            for (int i = 0; i < genres.size() && i < targetCounts.length; i++) {
-                String genre = genres.get(i);
-                int targetCount = targetCounts[i];
-                
-                try {
-                    // 장르 + 키워드 조합으로 검색
-                    String searchQuery = genre + " " + keywordString;
-                    System.out.println("장르별 검색 쿼리: " + searchQuery + " (목표: " + targetCount + "곡)");
-                    
-                    List<SpotifyDTO.MusicRecommendation.RecommendedTrack> genreTracks = 
-                        searchPlaylistForGenre(accessToken, searchQuery);
-                    
-                    // 중복 아티스트 제거하면서 목표 곡 수만큼 선택
-                    List<SpotifyDTO.MusicRecommendation.RecommendedTrack> selectedTracks = 
-                        selectTracksWithoutDuplicateArtists(genreTracks, usedArtists, targetCount);
-                    
-                    finalTracks.addAll(selectedTracks);
-                    System.out.println(genre + " 장르에서 " + selectedTracks.size() + "곡 추가 (중복 아티스트 제거 후)");
-                    
-                } catch (Exception e) {
-                    System.err.println(genre + " 장르 검색 중 오류: " + e.getMessage());
-                }
+            int domesticTarget = 0;
+            int internationalTarget = 0;
+
+            switch (region) {
+                case DOMESTIC:
+                    domesticTarget = 8;
+                    internationalTarget = 2;
+                    break;
+                case INTERNATIONAL:
+                    domesticTarget = 2;
+                    internationalTarget = 8;
+                    break;
+                case BOTH:
+                    domesticTarget = 5;
+                    internationalTarget = 5;
+                    break;
+            }
+
+            // 국내 음악 검색
+            if (domesticTarget > 0) {
+                List<SpotifyDTO.MusicRecommendation.RecommendedTrack> domesticTracks = 
+                    searchAndSelectTracksForMarket(accessToken, "KR", genres, keywordString, usedArtists, domesticTarget);
+                finalTracks.addAll(domesticTracks);
+            }
+
+            // 해외 음악 검색
+            if (internationalTarget > 0) {
+                List<SpotifyDTO.MusicRecommendation.RecommendedTrack> internationalTracks = 
+                    searchAndSelectTracksForMarket(accessToken, "US", genres, keywordString, usedArtists, internationalTarget);
+                finalTracks.addAll(internationalTracks);
             }
 
             System.out.println("최종 추천된 트랙 수: " + finalTracks.size());
@@ -156,6 +161,78 @@ public class SpotifyService {
             return new SpotifyDTO.MusicRecommendation(Collections.emptyList());
         }
     }
+
+    private List<SpotifyDTO.MusicRecommendation.RecommendedTrack> searchAndSelectTracksForMarket(
+        String accessToken, String market, List<String> genres, String keywordString, Set<String> usedArtists, int totalTarget) {
+
+        List<SpotifyDTO.MusicRecommendation.RecommendedTrack> allTracksFromMarket = new ArrayList<>();
+        
+        // 1. 마켓에 해당하는 모든 장르의 트랙을 수집
+        for (String genre : genres) {
+            try {
+                String searchQuery = genre + " " + keywordString;
+                allTracksFromMarket.addAll(searchPlaylistForGenre(accessToken, searchQuery, market));
+            } catch (Exception e) {
+                System.err.println(genre + " 장르(" + market + ") 검색 중 오류: " + e.getMessage());
+            }
+        }
+        Collections.shuffle(allTracksFromMarket);
+
+        // 2. 인기도에 따라 3개 그룹으로 분류
+        List<SpotifyDTO.MusicRecommendation.RecommendedTrack> veryPopular = new ArrayList<>();
+        List<SpotifyDTO.MusicRecommendation.RecommendedTrack> moderatelyPopular = new ArrayList<>();
+        List<SpotifyDTO.MusicRecommendation.RecommendedTrack> lesserKnown = new ArrayList<>();
+
+        for (SpotifyDTO.MusicRecommendation.RecommendedTrack track : allTracksFromMarket) {
+            if (track.getPopularity() >= 75) veryPopular.add(track);
+            else if (track.getPopularity() >= 30) moderatelyPopular.add(track);
+            else lesserKnown.add(track);
+        }
+
+        // 3. 목표 비율(2:5:3)에 따라 그룹별 목표 곡 수 계산
+        List<SpotifyDTO.MusicRecommendation.RecommendedTrack> finalMarketTracks = new ArrayList<>();
+        int veryPopularTarget = (int) Math.round(totalTarget * 0.2);
+        int moderatelyPopularTarget = (int) Math.round(totalTarget * 0.5);
+        int lesserKnownTarget = (int) Math.round(totalTarget * 0.3);
+
+        // 반올림으로 인해 합계가 totalTarget과 다를 경우 조정
+        int currentTotal = veryPopularTarget + moderatelyPopularTarget + lesserKnownTarget;
+        if(currentTotal > totalTarget) moderatelyPopularTarget -= (currentTotal - totalTarget);
+        if(currentTotal < totalTarget) moderatelyPopularTarget += (totalTarget - currentTotal);
+
+        // 4. 각 그룹에서 목표만큼 곡 선택 (중복 아티스트 제외)
+        fillFromBucket(finalMarketTracks, veryPopular, veryPopularTarget, usedArtists);
+        fillFromBucket(finalMarketTracks, moderatelyPopular, moderatelyPopularTarget, usedArtists);
+        fillFromBucket(finalMarketTracks, lesserKnown, lesserKnownTarget, usedArtists);
+
+        // 5. 목표 곡 수를 채우지 못했다면, 다른 그룹에서 추가로 선택
+        if (finalMarketTracks.size() < totalTarget) {
+            List<SpotifyDTO.MusicRecommendation.RecommendedTrack> fallbackPool = new ArrayList<>();
+            fallbackPool.addAll(moderatelyPopular);
+            fallbackPool.addAll(lesserKnown);
+            fallbackPool.addAll(veryPopular);
+            fillFromBucket(finalMarketTracks, fallbackPool, totalTarget - finalMarketTracks.size(), usedArtists);
+        }
+
+        System.out.println("마켓(" + market + ") 최종 선택된 곡 수: " + finalMarketTracks.size());
+        return finalMarketTracks;
+    }
+
+    private void fillFromBucket(List<SpotifyDTO.MusicRecommendation.RecommendedTrack> targetList, 
+                                List<SpotifyDTO.MusicRecommendation.RecommendedTrack> sourceBucket, 
+                                int count, Set<String> usedArtists) {
+        int added = 0;
+        for (SpotifyDTO.MusicRecommendation.RecommendedTrack track : sourceBucket) {
+            if (added >= count) break;
+
+            String primaryArtist = track.getArtist().split(",|ft\\.|feat\\.|&")[0].trim().toLowerCase();
+            if (usedArtists.add(primaryArtist)) {
+                targetList.add(track);
+                added++;
+            }
+        }
+    }
+
 
     // 중복 아티스트 없이 트랙 선택
     private List<SpotifyDTO.MusicRecommendation.RecommendedTrack> selectTracksWithoutDuplicateArtists(
@@ -191,14 +268,18 @@ public class SpotifyService {
 
     // 특정 장르와 키워드로 플레이리스트 검색하여 트랙 반환
     private List<SpotifyDTO.MusicRecommendation.RecommendedTrack> searchPlaylistForGenre(
-            String accessToken, String searchQuery) throws Exception {
+            String accessToken, String searchQuery, String market) throws Exception {
         
         // 플레이리스트 검색
-        String playlistSearchUrl = UriComponentsBuilder.fromHttpUrl(searchUrl)
+        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(searchUrl)
             .queryParam("q", searchQuery)
             .queryParam("type", "playlist")
-            .queryParam("limit", 5) // 더 많은 플레이리스트 검색으로 다양성 증대
-            .build().toUriString();
+            .queryParam("limit", 5);
+
+        if (market != null && !market.isEmpty()) {
+            builder.queryParam("market", market);
+        }
+        String playlistSearchUrl = builder.build().toUriString();
 
         HttpHeaders searchHeaders = new HttpHeaders();
         searchHeaders.setBearerAuth(accessToken);
@@ -243,7 +324,8 @@ public class SpotifyService {
                                     .collect(Collectors.joining(", ")),
                                 track.getExternalUrls() != null ? track.getExternalUrls().getSpotify() : "",
                                 track.getPreviewUrl(),
-                                track.getId()
+                                track.getId(),
+                                track.getPopularity()
                             ))
                             .collect(Collectors.toList());
 
@@ -255,5 +337,10 @@ public class SpotifyService {
         }
 
         return tracks;
+    }
+
+    private List<SpotifyDTO.MusicRecommendation.RecommendedTrack> searchPlaylistForGenre(
+            String accessToken, String searchQuery) throws Exception {
+        return searchPlaylistForGenre(accessToken, searchQuery, null);
     }
 } 

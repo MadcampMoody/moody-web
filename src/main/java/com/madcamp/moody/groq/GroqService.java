@@ -24,7 +24,13 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Random;
 import java.util.Set;
+import com.madcamp.moody.user.User;
+import com.madcamp.moody.user.UserRepository;
+import org.springframework.security.oauth2.core.user.OAuth2User;
+import java.util.Collections;
+import com.madcamp.moody.music.MusicRegion;
 
 @Service
 public class GroqService {
@@ -39,13 +45,15 @@ public class GroqService {
     private final SpotifyService spotifyService;
     private final PlaylistService playlistService;
     private final MusicService musicService;
+    private final UserRepository userRepository;
     
     @Autowired
-    public GroqService(RestTemplate restTemplate, SpotifyService spotifyService, PlaylistService playlistService, MusicService musicService) {
+    public GroqService(RestTemplate restTemplate, SpotifyService spotifyService, PlaylistService playlistService, MusicService musicService, UserRepository userRepository) {
         this.restTemplate = restTemplate;
         this.spotifyService = spotifyService;
         this.playlistService = playlistService;
         this.musicService = musicService;
+        this.userRepository = userRepository;
     }
     
     public GroqDTO.SimpleResponse generateContent(String prompt) {
@@ -100,37 +108,54 @@ public class GroqService {
     
     // 텍스트 분석 - Spotify 검색을 위한 장르 및 키워드로 변환
     public GroqDTO.SpotifyAnalysisResult analyzeTextForSpotifySearch(String text) {
+        return analyzeTextForSpotifySearch(text, null);
+    }
+
+    public GroqDTO.SpotifyAnalysisResult analyzeTextForSpotifySearch(String text, String preferredGenre) {
         // 텍스트 길이에 따른 요약 처리
         String analyzedText = text;
         if (text.length() > 1000) {
             analyzedText = text.substring(0, 1000) + "...";
         }
         
+        // 동적 프롬프트 생성
+        String genrePrompt;
+        if (preferredGenre != null && !preferredGenre.isEmpty()) {
+            genrePrompt = String.format(
+                "사용자가 특별히 선호하는 장르는 '%s'입니다. 이 장르와 글의 분위기를 모두 고려하여, 이와 잘 어울리는 **추가 장르 2개**를 추천해주세요. " +
+                "최종적으로 '%s'를 포함하여 총 3개의 장르가 되어야 합니다.",
+                preferredGenre, preferredGenre
+            );
+        } else {
+            genrePrompt = "글의 내용에 가장 적합한 장르 3개를 자유롭게 선택합니다.";
+        }
+
         String prompt = "당신은 사용자의 글을 한 편의 영화 장면처럼 여기고, 그 장면에 완벽하게 어울리는 사운드트랙을 만드는 **음악 감독**이자, 섬세한 **감성 큐레이터**입니다. " +
                 "모든 음악 장르와 아티스트에 대한 깊은 지식을 바탕으로 사용자의 감정과 상황에 딱 맞는 음악을 추천해주세요.\n\n" +
 
                 "🎯 **추천 철학**:\n" +
                 "- 글의 텍스트에서 느껴지는 감정, 분위기, 그리고 **상황적 맥락(계절, 기념일, 이벤트 등)**을 정확히 파악하여 음악적 경험을 제공합니다.\n" +
+                "- **특히, 크리스마스, 연말, 휴가 등 명확한 상황적 맥락이 있다면, 해당 분위기에 어울리는 장르(예: Christmas, Carol, Jazz)를 반드시 최우선으로 고려하고 포함해야 합니다.**\n" +
                 "- 감정에 공감하는 음악, 기분을 전환하는 음악, 새로운 에너지를 주는 음악 등 다양한 접근을 시도합니다.\n" +
                 "- 예상치 못한 창의적인 장르 조합과 독특한 키워드 선택을 통해 특별한 플레이리스트를 구성합니다.\n\n" +
 
                 "🎵 **장르 선택 시 고려사항**:\n" +
                 "- 장르는 반드시 Spotify에서 검색 가능한 **영어**로 선택해야 합니다.\n" +
                 "- 메인스트림부터 언더그라운드까지 모든 장르를 활용하며, **상황에 맞는 장르를 우선적으로 고려**합니다. (예: 크리스마스 -> jazz, carol, classical)\n" +
-                "- 특정 역할(DJ 등)에 얽매이지 않고, 글의 내용에 가장 적합한 장르를 자유롭게 선택합니다.\n" +
+                "- " + genrePrompt + "\n" +
                 "- Spotify에서 검색 가능한 모든 장르를 활용합니다.\n\n" +
 
                 "🎼 **키워드 선택 시 고려사항**:\n" +
                 "- 음악의 분위기, 느낌, 에너지를 표현하는 영어 단어를 사용합니다.\n" +
                 "- 감정적, 기술적, 분위기적 특성을 모두 활용합니다.\n" +
-                "- 음악 검색에 도움이 되는 구체적인 키워드를 선택합니다.\n\n" +
+                "- 음악 검색에 도움이 되는 구체적인 키워드 5개를 선택합니다.\n\n" +
 
                 "⚠️ **중요 지침**:\n" +
                 "- 매번 완전히 다른 장르 조합을 시도하되, 항상 글의 핵심 감정과 상황에 기반해야 합니다.\n" +
                 "- 뻔한 조합보다는 창의적이고 독특한 조합을 선호합니다.\n\n" +
 
                 "JSON 형식으로만 응답하세요:\n" +
-                "{\"genres\":[\"genre1\", \"genre2\", \"genre3\"],\"keywords\":[\"keyword1\", \"keyword2\", \"keyword3\"]}\n\n" +
+                "{\"genres\":[\"genre1\", \"genre2\", \"genre3\"],\"keywords\":[\"keyword1\", \"keyword2\", \"keyword3\", \"keyword4\", \"keyword5\"]}\n\n" +
 
                 "분석할 텍스트: \"" + analyzedText + "\"";
 
@@ -140,9 +165,35 @@ public class GroqService {
                 GroqDTO.SimpleResponse response = generateContent(prompt);
                 GroqDTO.SpotifyAnalysisResult result = parseSpotifyAnalysis(response.getResponse());
                 
+                // 장르 개수 보정 (3개 미만일 경우)
+                if (result.getGenres() != null && result.getGenres().size() < 3) {
+                    System.out.println("AI가 " + result.getGenres().size() + "개의 장르만 반환하여, 기본 장르로 보충합니다.");
+                    List<String> defaultGenres = Arrays.asList("pop", "acoustic", "electronic", "rock", "hip-hop");
+                    for (String defaultGenre : defaultGenres) {
+                        if (result.getGenres().size() >= 3) break;
+                        if (!result.getGenres().contains(defaultGenre)) {
+                            result.getGenres().add(defaultGenre);
+                        }
+                    }
+                }
+
+                // 사용자가 선호하는 장르를 결과에 포함 (AI가 빠뜨렸을 경우 대비)
+                if (preferredGenre != null && !preferredGenre.isEmpty() && result.getGenres() != null && !result.getGenres().contains(preferredGenre)) {
+                    result.getGenres().add(0, preferredGenre); // 가장 앞에 추가
+                    // 총 3개를 유지하기 위해 마지막 요소 제거
+                    if (result.getGenres().size() > 3) {
+                        result.getGenres().remove(result.getGenres().size() - 1);
+                    }
+                }
+
+                // 키워드 개수 5개로 맞추기 (초과 시)
+                if (result.getKeywords() != null && result.getKeywords().size() > 5) {
+                    result.setKeywords(new ArrayList<>(result.getKeywords().subList(0, 5)));
+                }
+
                 // 유효한 결과인지 확인
-                if (result.getGenres() != null && !result.getGenres().isEmpty() && 
-                    result.getKeywords() != null && !result.getKeywords().isEmpty()) {
+                if (result.getGenres() != null && result.getGenres().size() == 3 && 
+                    result.getKeywords() != null && result.getKeywords().size() == 5) {
                     return result;
                 }
                 
@@ -164,20 +215,39 @@ public class GroqService {
     private GroqDTO.SpotifyAnalysisResult fallbackAnalysis(String text) {
         try {
             String simplePrompt = "당신은 글의 감성과 상황에 맞는 음악을 추천하는 음악 큐레이터입니다. " +
-                    "다음 텍스트의 감정을 분석하고, 글의 상황(예: 크리스마스, 비 오는 날 등)을 고려하여 어울리는 음악 장르 3개와 키워드 3개를 추천해주세요. " +
+                    "다음 텍스트의 감정을 분석하고, 글의 상황(예: 크리스마스, 비 오는 날 등)을 고려하여 어울리는 음악 장르 3개와 키워드 5개를 추천해주세요. " +
                     "**장르는 반드시 영어로**, 키워드는 음악의 분위기를 표현하는 영어 단어로 선택하세요. " +
                     "반드시 다음 JSON 형식으로만 응답하세요:\n" +
-                    "{\"genres\":[\"genre1\", \"genre2\", \"genre3\"],\"keywords\":[\"keyword1\", \"keyword2\", \"keyword3\"]}\n\n" +
+                    "{\"genres\":[\"genre1\", \"genre2\", \"genre3\"],\"keywords\":[\"keyword1\", \"keyword2\", \"keyword3\", \"keyword4\", \"keyword5\"]}\n\n" +
                     "텍스트: \"" + text + "\"";
             
             GroqDTO.SimpleResponse response = generateContent(simplePrompt);
-            return parseSpotifyAnalysis(response.getResponse());
+            GroqDTO.SpotifyAnalysisResult result = parseSpotifyAnalysis(response.getResponse());
+
+            // 장르 개수 보정 (3개 미만일 경우)
+            if (result.getGenres() != null && result.getGenres().size() < 3) {
+                System.out.println("Fallback 분석에서 AI가 " + result.getGenres().size() + "개의 장르만 반환하여, 기본 장르로 보충합니다.");
+                List<String> defaultGenres = Arrays.asList("alternative", "neo-soul", "synthwave", "pop", "r&b");
+                for (String defaultGenre : defaultGenres) {
+                    if (result.getGenres().size() >= 3) break;
+                    if (!result.getGenres().contains(defaultGenre)) {
+                        result.getGenres().add(defaultGenre);
+                    }
+                }
+            }
+
+            // 키워드 개수 5개로 맞추기 (초과 시)
+            if (result.getKeywords() != null && result.getKeywords().size() > 5) {
+                result.setKeywords(new ArrayList<>(result.getKeywords().subList(0, 5)));
+            }
+
+            return result;
             
         } catch (Exception e) {
             System.err.println("Fallback 분석도 실패: " + e.getMessage());
             return new GroqDTO.SpotifyAnalysisResult(
                 Arrays.asList("alternative", "neo-soul", "synthwave"),
-                Arrays.asList("introspective", "ethereal", "rhythmic")
+                Arrays.asList("introspective", "ethereal", "rhythmic", "groovy", "dreamy")
             );
         }
     }
@@ -227,7 +297,7 @@ public class GroqService {
             System.err.println("모든 파싱 시도 실패, 기본값 반환");
             return new GroqDTO.SpotifyAnalysisResult(
                 Arrays.asList("pop", "acoustic", "ambient"), 
-                Arrays.asList("healing", "calming", "uplifting")
+                Arrays.asList("healing", "calming", "uplifting", "soothing", "peaceful")
             );
         }
     }
@@ -268,53 +338,104 @@ public class GroqService {
     }
     
     // 텍스트 분석 + 음악 추천 (Playlist Search API 사용)
-    public GroqDTO.MusicAnalysisResponse analyzeTextAndRecommendMusic(String text) {
+    public GroqDTO.MusicAnalysisResponse analyzeTextAndRecommendMusic(String text, OAuth2User oAuth2User) {
+        // OAuth2User에서 User 엔티티 조회
+        String oauthId = String.valueOf(oAuth2User.getAttributes().get("id"));
+        User user = userRepository.findByOauthId(oauthId);
+        if (user == null) {
+            throw new IllegalArgumentException("사용자를 찾을 수 없습니다.");
+        }
+
+        // 0. 사용자 선호 장르 선택
+        List<String> userGenres = user.getMusicGenresList();
+        String selectedUserGenre = null;
+        if (userGenres != null && !userGenres.isEmpty()) {
+            selectedUserGenre = userGenres.get(new Random().nextInt(userGenres.size()));
+        }
+
         // 1. 텍스트 분석하여 장르와 키워드 추출
-        GroqDTO.SpotifyAnalysisResult analysisResult = analyzeTextForSpotifySearch(text);
+        GroqDTO.SpotifyAnalysisResult analysisResult = analyzeTextForSpotifySearch(text, selectedUserGenre);
 
         // 2. Spotify에서 음악 추천 받기
+        MusicRegion region = user.getMusicRegion() != null ? user.getMusicRegion() : MusicRegion.BOTH;
         SpotifyDTO.MusicRecommendation spotifyResult = spotifyService.recommendMusicViaPlaylistSearch(
                 analysisResult.getGenres(),
-                analysisResult.getKeywords()
+                analysisResult.getKeywords(),
+                region
         );
 
-        // 3. 응답 변환 및 아티스트 중복 제거
+        // 3. 응답 변환 및 아티스트 중복 제거 (10곡 보장 로직)
         Set<String> processedArtists = new HashSet<>();
-        List<GroqDTO.MusicAnalysisResponse.RecommendedTrack> recommendedTracks =
-                spotifyResult.getTracks().stream()
-                        .filter(track -> {
-                            String artistName = track.getArtist();
-                            if (artistName == null || artistName.isEmpty()) {
-                                return false; // 아티스트 이름이 없으면 필터링
-                            }
-                            // "ft.", "feat.", "&", "," 등의 구분자를 사용하여 첫 번째 아티스트 이름만 추출
-                            String primaryArtist = artistName.split(",|ft\\.|feat\\.|&")[0].trim();
-                            
-                            // Set에 주요 아티스트가 없으면 true를 반환하고, Set에 추가
-                            return processedArtists.add(primaryArtist.toLowerCase());
-                        })
-                        .map(track -> new GroqDTO.MusicAnalysisResponse.RecommendedTrack(
-                                track.getTitle(),
-                                track.getArtist(),
-                                track.getSpotifyUrl(),
-                                track.getPreviewUrl(),
-                                track.getTrackId() // trackId 추가
-                        ))
-                        .collect(Collectors.toList());
+        List<GroqDTO.MusicAnalysisResponse.RecommendedTrack> recommendedTracks = new ArrayList<>();
+        List<SpotifyDTO.MusicRecommendation.RecommendedTrack> spotifyTracks = new ArrayList<>(spotifyResult.getTracks());
+
+        int attempts = 0;
+        final int MAX_ATTEMPTS = 5; // 무한 루프 방지를 위한 최대 시도 횟수
+
+        while (recommendedTracks.size() < 10 && attempts < MAX_ATTEMPTS) {
+            // 현재 가지고 있는 트랙 목록에서 중복되지 않는 아티스트의 곡을 추가
+            List<SpotifyDTO.MusicRecommendation.RecommendedTrack> currentTracks = new ArrayList<>(spotifyTracks);
+            Collections.shuffle(currentTracks); // 트랙 순서를 섞어 매번 다른 곡이 선택될 확률을 높임
+
+            for (SpotifyDTO.MusicRecommendation.RecommendedTrack track : currentTracks) {
+                if (recommendedTracks.size() >= 10) {
+                    break;
+                }
+                String artistName = track.getArtist();
+                if (artistName == null || artistName.isEmpty()) {
+                    continue;
+                }
+                String primaryArtist = artistName.split(",|ft\\.|feat\\.|&")[0].trim().toLowerCase();
+                if (processedArtists.add(primaryArtist)) {
+                    recommendedTracks.add(new GroqDTO.MusicAnalysisResponse.RecommendedTrack(
+                            track.getTitle(),
+                            track.getArtist(),
+                            track.getSpotifyUrl(),
+                            track.getPreviewUrl(),
+                            track.getTrackId()
+                    ));
+                }
+            }
+
+            // 10곡을 채우지 못했다면, 추가로 음악 검색
+            if (recommendedTracks.size() < 10) {
+                attempts++;
+                if (attempts >= MAX_ATTEMPTS) {
+                    System.out.println("최대 시도(" + MAX_ATTEMPTS + "회)에 도달하여 추가 검색을 중단합니다.");
+                    break;
+                }
+
+                System.out.println((attempts) + "차 시도: 플레이리스트에 " + recommendedTracks.size() + "곡, 10곡을 채우기 위해 추가 검색.");
+
+                // 다음 검색을 위한 새로운 쿼리 생성
+                SpotifyDTO.MusicRecommendation moreSpotifyResult = spotifyService.recommendMusicViaPlaylistSearch(
+                        analysisResult.getGenres(), // 동일 장르 목록을 다시 사용
+                        analysisResult.getKeywords(), // 동일 키워드 목록을 다시 사용
+                        region
+                );
+                spotifyTracks = moreSpotifyResult.getTracks();
+            }
+        }
+
+        if (recommendedTracks.size() < 10) {
+            System.out.println("최종적으로 10곡을 채우지 못했습니다. 현재 곡 수: " + recommendedTracks.size());
+        }
 
         // 4. DB에 플레이리스트와 음악 저장
         if (!recommendedTracks.isEmpty()) {
             // 4.1. Playlist 생성 및 저장
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
             String title = LocalDateTime.now().format(formatter) + "의 플레이리스트";
-            long dummyDiaryId = 1L; // 임시 다이어리 ID
-            PlaylistDTO newPlaylistInfo = new PlaylistDTO(0L, title, dummyDiaryId, null);
+            
+            // playlist 생성 시 diaryId가 필요하므로 user의 id를 임시로 사용
+            PlaylistDTO newPlaylistInfo = new PlaylistDTO(title, user.getId());
             PlaylistDTO savedPlaylist = playlistService.createPlaylist(newPlaylistInfo);
 
             // 4.2. Music 목록 생성 및 저장
             List<MusicDTO> musicToSave = new ArrayList<>();
             for (GroqDTO.MusicAnalysisResponse.RecommendedTrack track : recommendedTracks) {
                 MusicDTO musicDTO = new MusicDTO(0L, track.getSpotifyUrl(), savedPlaylist.getPlaylistId());
+                musicDTO.setUserId(user.getId()); // 사용자 ID 설정
                 musicToSave.add(musicDTO);
             }
             musicService.createMusics(musicToSave);

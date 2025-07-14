@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import "./MoodTracker.css";
 import MoodSelector from "./MoodSelector";
 
@@ -8,6 +9,7 @@ function MoodTracker() {
   const [userData, setUserData] = useState(null);
   const [showMoodSelector, setShowMoodSelector] = useState(false);
   const [moodRecords, setMoodRecords] = useState({});
+  const navigate = useNavigate();
 
   useEffect(() => {
     // 로컬 스토리지에서 사용자 데이터 가져오기
@@ -117,6 +119,9 @@ function MoodTracker() {
             <p>오늘 하루는 어떠셨나요?</p>
           </div>
           <div className="header-actions">
+            <button className="today-btn" onClick={() => navigate('/music_recommend')}>
+              음악 추천
+            </button>
             <button className="today-btn" onClick={goToToday}>
               오늘
             </button>

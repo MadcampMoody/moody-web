@@ -4,6 +4,7 @@ public class MusicDTO {
     private Long musicId;
     private String musicUrl;
     private Long playlistId;
+    private Long userId;
 
     // 기본 생성자
     public MusicDTO() {
@@ -63,6 +64,14 @@ public class MusicDTO {
 
     public void setPlaylistId(Long playlistId) {
         this.playlistId = playlistId;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
     }
 
     @Override
