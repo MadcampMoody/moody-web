@@ -1,6 +1,8 @@
 package com.madcamp.moody.music;
 
+import com.madcamp.moody.playlist.Playlist;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -35,4 +37,6 @@ public interface MusicRepository extends JpaRepository<Music, Long> {
 
     // 특정 playlist_id에 속한 모든 music 삭제
     void deleteByPlaylistId(Long playlistId);
-} 
+
+    List<Music> findByUserId(Long userId);
+}

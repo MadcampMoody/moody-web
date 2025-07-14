@@ -2,6 +2,7 @@ package com.madcamp.moody.playlist;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import org.hibernate.annotations.CreationTimestamp;
 
 @Entity
@@ -19,6 +20,9 @@ public class Playlist {
     @Column(name = "diary_id", nullable = false)
     private Long diaryId;
 
+    @Column(name = "date")
+    private LocalDate date;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -31,6 +35,13 @@ public class Playlist {
     public Playlist(String title, Long diaryId) {
         this.title = title;
         this.diaryId = diaryId;
+    }
+
+    // 생성자 (date 포함)
+    public Playlist(String title, Long diaryId, LocalDate date) {
+        this.title = title;
+        this.diaryId = diaryId;
+        this.date = date;
     }
 
     // Getter and Setter
@@ -58,6 +69,14 @@ public class Playlist {
         this.diaryId = diaryId;
     }
 
+    public LocalDate getDate() {
+        return date;
+    }
+
+    public void setDate(LocalDate date) {
+        this.date = date;
+    }
+
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
@@ -72,6 +91,7 @@ public class Playlist {
                 "playlistId=" + playlistId +
                 ", title='" + title + '\'' +
                 ", diaryId=" + diaryId +
+                ", date=" + date +
                 ", createdAt=" + createdAt +
                 '}';
     }

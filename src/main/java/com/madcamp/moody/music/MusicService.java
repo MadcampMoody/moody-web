@@ -142,4 +142,20 @@ public class MusicService {
     public boolean isMusicOwnedByPlaylist(Long musicId, Long playlistId) {
         return musicRepository.findByMusicIdAndPlaylistId(musicId, playlistId).isPresent();
     }
+
+    // 사용자가 추천받은 모든 음악의 trackId 조회
+    @Transactional(readOnly = true)
+    public List<String> findTrackIdsByUserId(Long userId) {
+        return musicRepository.findByUserId(userId)
+                .stream()
+                .map(music -> {
+                    String url = music.getMusicUrl();
+                    // "https://open.spotify.com/track/TRACK_ID" 형식에서 TRACK_ID 추출
+                    String[] parts = url.split("/");
+                    return parts.length > 0 ? parts[parts.length - 1] : null;
+                })
+                .filter(id -> id != null && !id.isEmpty())
+                .distinct()
+                .collect(Collectors.toList());
+    }
 } 
