@@ -281,27 +281,17 @@ public class AuthController {
             .build();
     }
 
-    // 온보딩 완료 처리
-    @PostMapping("/onboarding-complete")
+    @PostMapping("/onboarding")
     public ResponseEntity<?> completeOnboarding(@AuthenticationPrincipal OAuth2User oauth2User, 
                                                @RequestBody Map<String, Object> onboardingData) {
         try {
+            System.out.println("=== completeOnboarding called ===");
             if (oauth2User == null) {
                 return ResponseEntity.status(401).body(Map.of("error", "인증되지 않은 사용자"));
             }
-
-            Object idAttribute = oauth2User.getAttribute("id");
-            String oauthId;
             
-            if (idAttribute instanceof Long) {
-                oauthId = String.valueOf((Long) idAttribute);
-            } else if (idAttribute instanceof String) {
-                oauthId = (String) idAttribute;
-            } else {
-                oauthId = String.valueOf(idAttribute);
-            }
-            
-            User user = userRepository.findByOauthId(oauthId);
+            // 카카오/Spotify 상관없이 현재 로그인한 사용자 정보 가져오기
+            User user = getCurrentAuthenticatedUser(oauth2User);
             if (user == null) {
                 return ResponseEntity.status(404).body(Map.of("error", "사용자를 찾을 수 없습니다"));
             }
@@ -310,7 +300,7 @@ public class AuthController {
             user.setOnboardingCompleted(true);
             
             // 온보딩 데이터 업데이트
-            String nickname = (String) onboardingData.get("nickname");
+            String nickname = (String) onboardingData.get("name"); // "nickname" -> "name"
             if (nickname != null && !nickname.trim().isEmpty()) {
                 user.setName(nickname);
             }
@@ -323,7 +313,7 @@ public class AuthController {
             
             // 음악 장르 선호도 저장 (여러 장르를 JSON으로 저장)
             @SuppressWarnings("unchecked")
-            List<String> musicPreferences = (List<String>) onboardingData.get("musicPreferences");
+            List<String> musicPreferences = (List<String>) onboardingData.get("musicGenres"); // "musicPreferences" -> "musicGenres"
             if (musicPreferences != null && !musicPreferences.isEmpty()) {
                 try {
                     // 프론트엔드 용어를 데이터베이스 용어로 변환

@@ -20,5 +20,5 @@ public interface LikedSongRepository extends JpaRepository<LikedSong, Long> {
     boolean existsByUserAndTrackId(User user, String trackId);
     
     // '좋아요' 취소
-    void deleteByUserAndTrackId(User user, String trackId);
+    long deleteByUserAndTrackId(User user, String trackId);
 } 

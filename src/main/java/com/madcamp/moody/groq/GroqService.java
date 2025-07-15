@@ -348,8 +348,16 @@ public class GroqService {
     // 텍스트 분석 + 음악 추천 (Playlist Search API 사용)
     public GroqDTO.MusicAnalysisResponse analyzeTextAndRecommendMusic(String text, String date, OAuth2User oAuth2User) {
         // OAuth2User에서 User 엔티티 조회
-        String oauthId = String.valueOf(oAuth2User.getAttributes().get("id"));
-        User user = userRepository.findByOauthId(oauthId);
+        User user = null;
+        String spotifyDisplayName = oAuth2User.getAttribute("display_name");
+        if (spotifyDisplayName != null) {
+            String spotifyId = oAuth2User.getAttribute("id");
+            user = userRepository.findBySpotifyOauthId(spotifyId);
+        } else {
+            String kakaoId = String.valueOf(oAuth2User.getAttribute("id"));
+            user = userRepository.findByOauthId(kakaoId);
+        }
+
         if (user == null) {
             throw new IllegalArgumentException("사용자를 찾을 수 없습니다.");
         }

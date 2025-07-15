@@ -247,10 +247,8 @@ function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, o
 
   const handleToggleLike = async (track) => {
     const isLiked = likedTrackIds.has(track.trackId);
-    const apiEndpoint = isLiked ? '/remove' : '/add';
     
-    // 1. 낙관적 UI 업데이트: 즉시 상태를 변경
-    const originalLikedIds = new Set(likedTrackIds);
+    // Optimistic UI Update
     const newLikedTrackIds = new Set(likedTrackIds);
     if (isLiked) {
       newLikedTrackIds.delete(track.trackId);
@@ -260,21 +258,30 @@ function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, o
     setLikedTrackIds(newLikedTrackIds);
 
     try {
-      // 2. 백그라운드에서 서버에 요청
-      await axios.post(`/api/liked-songs${apiEndpoint}`, {
-        trackId: track.trackId,
-        musicUrl: track.spotifyUrl,
-        title: track.title,
-        artist: track.artist
-      }, { withCredentials: true });
-      // 3. 성공 시 아무것도 하지 않음
-
+      const apiEndpoint = isLiked ? '/api/liked-songs/remove' : '/api/liked-songs/add';
+      await axios.post(apiEndpoint, 
+        { 
+          trackId: track.trackId,
+          title: track.title,
+          artist: track.artist,
+          musicUrl: track.spotifyUrl
+        }, 
+        { withCredentials: true }
+      );
     } catch (error) {
-      console.error(`좋아요 ${isLiked ? '취소' : '추가'} 실패:`, error);
-      alert("요청 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+      console.error("좋아요 처리 실패:", error);
+      alert("요청 처리 중 오류가 발생했습니다.");
       
-      // 4. 실패 시 UI를 원래 상태로 되돌림
-      setLikedTrackIds(originalLikedIds);
+      // Revert UI on failure
+      setLikedTrackIds(likedTrackIds);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    if (onCancel) {
+      onCancel();
+    } else {
+      window.history.back();
     }
   };
 

@@ -48,12 +48,10 @@ function Onboarding() {
   const handleComplete = async () => {
     setError(""); // 에러 초기화
     try {
-      // musicRegion 값을 Domestic -> DOMESTIC, International -> INTERNATIONAL로 변환
-      const regionToSend = userData.musicRegion === 'domestic' ? 'DOMESTIC' : 'INTERNATIONAL';
-
+      // musicRegion 값을 domestic, international 소문자로 전송
       const dataToSend = {
         name: userData.name,
-        musicRegion: regionToSend,
+        musicRegion: userData.musicRegion, // 'domestic' 또는 'international'
         musicGenres: userData.musicGenres
       };
       

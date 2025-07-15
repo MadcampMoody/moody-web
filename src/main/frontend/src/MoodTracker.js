@@ -253,6 +253,9 @@ function MoodTracker() {
       });
 
       if (response.ok) {
+        const newRecord = await response.json();
+        console.log('서버 응답:', newRecord);
+        
         // 성공적으로 저장되면 로컬 상태 업데이트
         const dateKey = date.toDateString();
         const newMoodRecords = {
@@ -270,13 +273,18 @@ function MoodTracker() {
         // 감정 저장 후 diary 페이지로 이동
         navigate(`/diary/${dateString}`);
       } else {
-        console.error('감정 저장 실패');
-        alert('감정 저장에 실패했습니다.');
+        const errorData = await response.json().catch(() => ({ message: "Unknown error" }));
+        console.error('감정 저장 실패:', errorData);
+        alert(`감정 기록에 실패하였습니다: ${errorData.message}`);
       }
     } catch (error) {
       console.error('감정 저장 중 오류:', error);
-      alert('감정 저장 중 오류가 발생했습니다.');
+      alert(`감정 기록 중 오류가 발생했습니다: ${error.message}`);
     }
+  };
+
+  const handleCancelMoodSelection = () => {
+    setShowMoodSelector(false);
   };
 
   const handleLogout = () => {

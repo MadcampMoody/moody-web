@@ -28,8 +28,22 @@ public class LikedSongService {
         if (oAuth2User == null) {
             throw new IllegalArgumentException("User not authenticated");
         }
+
+        // OAuth2User의 속성을 기반으로 Spotify 사용자인지 Kakao 사용자인지 확인
         String oauthId = String.valueOf(oAuth2User.getAttributes().get("id"));
-        User user = userRepository.findByOauthId(oauthId);
+        
+        // Spotify 사용자 속성 확인
+        boolean isSpotifyUser = oAuth2User.getAttributes().containsKey("display_name") || oAuth2User.getAttributes().containsKey("country");
+
+        User user;
+        if (isSpotifyUser) {
+            // Spotify 사용자인 경우 spotify_oauth_id로 조회
+            user = userRepository.findBySpotifyOauthId(oauthId);
+        } else {
+            // Kakao 사용자인 경우 oauth_id로 조회
+            user = userRepository.findByOauthId(oauthId);
+        }
+
         if (user == null) {
             throw new IllegalArgumentException("User not found for OAuth ID: " + oauthId);
         }

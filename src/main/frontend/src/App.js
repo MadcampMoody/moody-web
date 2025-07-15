@@ -15,6 +15,7 @@ export const SpotifyPlayerContext = createContext();
 const SpotifyPlayerProvider = ({ children }) => {
   const [isSpotifyLoggedIn, setIsSpotifyLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true);
+  const location = useLocation(); // useLocation 훅 사용
 
   // Spotify 로그인 상태 확인
   const checkSpotifyLoginStatus = async () => {
@@ -49,17 +50,34 @@ const SpotifyPlayerProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    checkSpotifyLoginStatus();
-    
-    // 페이지에 포커스가 돌아올 때 상태 재확인
+    // 페이지에 포커스가 돌아올 때 상태 재확인 로직
     const handleFocus = () => {
+      const currentPath = window.location.pathname;
+      // 이미 로그인이 되었거나, 관련 없는 페이지에 있다면 상태를 재확인하지 않습니다.
+      if (isSpotifyLoggedIn || currentPath === '/onboarding' || currentPath === '/') {
+        return;
+      }
       console.log('페이지 포커스 복귀 - 전역 Spotify 로그인 상태 재확인');
       checkSpotifyLoginStatus();
     };
-
     window.addEventListener('focus', handleFocus);
+
+    // --- 초기 상태 확인 로직 ---
+    const path = location.pathname;
+    // 이미 Spotify에 로그인되어 있다면, 더 이상 상태를 확인하지 않습니다.
+    if (isSpotifyLoggedIn) {
+      setLoading(false);
+      return () => window.removeEventListener('focus', handleFocus);
+    }
+    // 온보딩과 로그인 페이지가 아니라면 상태 확인을 시도합니다.
+    if (path !== '/onboarding' && path !== '/') {
+      checkSpotifyLoginStatus();
+    } else {
+      setLoading(false); // 그 외 페이지에서는 로딩 상태만 false로 변경
+    }
+    
     return () => window.removeEventListener('focus', handleFocus);
-  }, []);
+  }, [location.pathname, isSpotifyLoggedIn]); // isSpotifyLoggedIn을 의존성 배열에 추가
 
   return (
     <SpotifyPlayerContext.Provider value={{ 
@@ -154,11 +172,11 @@ const LoginPage = () => {
 
 function App() {
   return (
-    <SpotifyPlayerProvider>
-      <Router>
+    <Router>
+      <SpotifyPlayerProvider>
         <AppLayout />
-      </Router>
-    </SpotifyPlayerProvider>
+      </SpotifyPlayerProvider>
+    </Router>
   );
 }
 

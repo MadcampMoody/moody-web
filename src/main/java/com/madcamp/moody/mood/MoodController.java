@@ -67,9 +67,10 @@ public class MoodController {
             mood.setMoodType(moodType);
             mood.setDate(LocalDate.parse(request.getDate()));
 
-            moodRepository.save(mood);
+            Mood savedMood = moodRepository.save(mood);
 
-            return ResponseEntity.ok().body("감정 기록 완료!");
+            // 프론트엔드에서 사용할 수 있도록 저장된 Mood 객체를 DTO로 변환하여 반환
+            return ResponseEntity.ok(new MoodDTO(savedMood));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(400).body("잘못된 감정 타입입니다: " + request.getMoodType());
         } catch (Exception e) {
