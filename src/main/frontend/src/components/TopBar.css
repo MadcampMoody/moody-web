@@ -1,11 +1,11 @@
 .top-bar {
-  width: 100%;
+  width: 96%;
   height: 80px; /* 플레이어 컨트롤에 맞게 높이 증가 */
   background-color: #f5f5f5;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 30px; /* 좌우 패딩도 증가 */
+  padding: 0 50px 0 50px; /* 오른쪽 패딩 증가 */
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   position: fixed;
   top: 0;
@@ -35,19 +35,38 @@
   background-color: #b0b0b0;
 }
 
+.profile-btn {
+  background-color: #c4c4c4;
+  border: none;
+  border-radius: 25px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  white-space: nowrap; /* 텍스트가 줄바꿈되지 않도록 */
+}
+
+.profile-btn:hover {
+  background-color: #b0b0b0;
+}
+
 .top-bar-right {
   display: flex;
   align-items: center;
+  gap: 20px; /* 플레이어와 프로필 버튼 사이 간격 */
 }
 
 .player-controls {
   background-color: #666;
   border-radius: 25px; /* 적당한 둥근 모서리 */
-  padding: 8px 16px; /* 패딩 조정 */
+  padding: 8px 20px; /* 좌우 패딩을 동일하게 */
   display: flex;
   align-items: center;
-  gap: 10px; /* 간격 조정 */
-  height: 50px; /* TopBar 안에 맞도록 높이 조정 */
+  justify-content: center; /* 중앙 정렬 */
+  gap: 12px; /* 간격을 균등하게 */
+  height: 54px; /* TopBar 안에 맞도록 높이 조정 */
   box-sizing: border-box;
 }
 
@@ -65,6 +84,7 @@
   justify-content: center;
   transition: all 0.2s ease;
   flex-shrink: 0; /* 버튼 크기 고정 */
+  flex-basis: 34px; /* 대칭을 위한 고정 크기 */
 }
 
 .control-btn:hover {
@@ -75,9 +95,10 @@
 .play-pause-btn {
   background-color: white;
   color: #333;
-  width: 36px; /* 재생 버튼을 살짝 더 크게 */
-  height: 36px;
+  width: 38px; /* 재생 버튼을 중앙에 맞게 조정 */
+  height: 38px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2); /* 그림자 조정 */
+  flex-basis: 38px; /* 대칭을 위한 고정 크기 */
 }
 
 .play-pause-btn:hover {
@@ -93,8 +114,8 @@
 }
 
 .play-pause-btn svg {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
 }
 
 /* TopBar가 있는 페이지의 전역 레이아웃 스타일 */

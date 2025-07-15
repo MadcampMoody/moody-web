@@ -24,6 +24,11 @@ const TopBar = () => {
     // TODO: Spotify 다음 곡 기능 구현
   };
 
+  const handleProfile = () => {
+    console.log('내 프로필');
+    // TODO: 프로필 페이지로 이동
+  };
+
   return (
     <div className="top-bar">
       <div className="top-bar-left">
@@ -52,6 +57,10 @@ const TopBar = () => {
             </svg>
           </button>
         </div>
+        
+        <button className="profile-btn" onClick={handleProfile}>
+          내 프로필
+        </button>
       </div>
     </div>
   );
