@@ -1,11 +1,38 @@
 .mood-tracker-container {
-  min-height: 100vh;
+  height: 100vh;
   background: #ffffff; /* 흰색 배경으로 변경 */
-  padding: 200px;
+  padding: 20px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
-.mood-tracker-header, .calendar-container, .selected-date-info {
+.mood-tracker-header {
+  background: #505050; /* 포인트 색상 배경으로 변경 */
+  color: white; /* 내부 기본 글자색 흰색으로 변경 */
+  border-radius: 20px;
+  padding: 15px 20px;
+  margin-bottom: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  flex-shrink: 0;
+}
+
+.calendar-container {
+  background: #505050; /* 포인트 색상 배경으로 변경 */
+  color: white; /* 내부 기본 글자색 흰색으로 변경 */
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.selected-date-info {
   background: #505050; /* 포인트 색상 배경으로 변경 */
   color: white; /* 내부 기본 글자색 흰색으로 변경 */
   border-radius: 20px;
@@ -91,7 +118,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 15px;
+  flex-shrink: 0;
 }
 
 .nav-btn {
@@ -126,13 +154,18 @@
 
 .calendar {
   width: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .calendar-weekdays {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 4px;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
+  flex-shrink: 0;
 }
 
 .weekday {
@@ -147,10 +180,10 @@
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 4px;
+  flex: 1;
 }
 
 .calendar-day {
-  aspect-ratio: 1;
   border: 2px solid transparent;
   border-radius: 12px;
   display: flex;
@@ -162,6 +195,8 @@
   position: relative;
   background: #6a6a6a; /* 어두운 배경 */
   color: white;
+  min-height: 50px;
+  height: 100%;
 }
 
 .calendar-day:hover {
@@ -275,16 +310,72 @@
   font-size: 16px;
 }
 
+.plus-btn-container {
+  height: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.big-plus-btn {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #505050;
+  color: white;
+  font-size: 48px;
+  font-weight: bold;
+  border: none;
+  box-shadow: 0 8px 24px rgba(80, 80, 80, 0.18);
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s, box-shadow 0.2s, opacity 0.3s ease;
+  outline: none;
+  z-index: 1002;
+}
+
+.big-plus-btn.visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.big-plus-btn.hidden {
+  opacity: 0;
+  transform: scale(0.8);
+  pointer-events: none;
+}
+
+.big-plus-btn:hover:not(:disabled) {
+  background: #6a6a6a;
+  transform: scale(1.08);
+  box-shadow: 0 12px 32px rgba(80, 80, 80, 0.25);
+}
+
+.big-plus-btn:disabled {
+  background: #e0e0e0;
+  color: #aaa;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
 /* 반응형 디자인 */
 @media (max-width: 768px) {
   .mood-tracker-container {
     padding: 10px;
   }
   
-  .mood-tracker-header,
-  .calendar-container,
+  .mood-tracker-header {
+    padding: 15px;
+    margin-bottom: 10px;
+  }
+  
+  .calendar-container {
+    padding: 15px;
+  }
+  
   .selected-date-info {
-    padding: 20px;
+    padding: 15px;
   }
   
   .header-content {
@@ -302,10 +393,21 @@
   
   .calendar-day {
     border-radius: 10px;
+    min-height: 45px;
   }
   
   .day-number {
     font-size: 14px;
+  }
+  
+  .plus-btn-container {
+    height: 90px;
+  }
+  
+  .big-plus-btn {
+    width: 70px;
+    height: 70px;
+    font-size: 40px;
   }
 }
 

@@ -4,6 +4,7 @@ import com.madcamp.moody.user.User;
 import com.madcamp.moody.user.UserRepository;
 import com.madcamp.moody.mood.Mood;
 import com.madcamp.moody.mood.MoodRepository;
+import com.madcamp.moody.playlist.PlaylistRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -25,6 +26,9 @@ public class DiaryController {
 
     @Autowired
     private MoodRepository moodRepository;
+
+    @Autowired
+    private PlaylistRepository playlistRepository;
 
     @PostMapping
     public ResponseEntity<?> saveDiary(
@@ -55,6 +59,8 @@ public class DiaryController {
             return ResponseEntity.status(404).body("Diary not found");
         }
         Mood mood = diary.getMood();
+        // playlist도 함께 삭제
+        playlistRepository.deleteAll(playlistRepository.findByDiaryId(diaryId));
         diaryRepository.delete(diary);
         if (mood != null) {
             moodRepository.delete(mood);

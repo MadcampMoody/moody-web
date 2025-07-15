@@ -16,10 +16,10 @@
   background: white;
   border-radius: 25px;
   padding: 30px;
-  max-width: 600px;
+  max-width: 500px;
   width: 100%;
   max-height: 80vh;
-  overflow-y: auto;
+  overflow: visible;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
   animation: modalSlideIn 0.3s ease-out;
 }
@@ -58,192 +58,442 @@
   position: absolute;
   top: -10px;
   right: -10px;
-  background: #f8f9fa;
-  border: 2px solid #e1e5e9;
-  color: #666;
-  width: 40px;
-  height: 40px;
+  background: #f5f5f5;
+  border: none;
   border-radius: 50%;
+  width: 35px;
+  height: 35px;
   font-size: 20px;
   font-weight: bold;
   cursor: pointer;
-  transition: all 0.3s ease;
+  color: #666;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.2s ease;
 }
 
 .close-btn:hover {
-  background: #dc3545;
-  color: white;
-  border-color: #dc3545;
+  background: #e0e0e0;
+  color: #333;
   transform: scale(1.1);
 }
 
-.mood-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 15px;
-  margin-bottom: 30px;
+/* 원형 감정 선택기 컨테이너 */
+.circular-mood-container {
+  position: relative;
+  width: 300px;
+  height: 300px;
+  margin: 40px auto;
+  cursor: grab;
+  user-select: none;
 }
 
-.mood-sticker {
+.circular-mood-container:active {
+  cursor: grabbing;
+}
+
+/* 중앙의 + 버튼 */
+.center-plus-btn {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #505050;
+  color: white;
+  font-size: 32px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 15px rgba(80, 80, 80, 0.3);
+  z-index: 10;
+}
+
+/* 원형으로 배치된 감정 아이템 */
+.circular-mood-item {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 80px;
+  height: 80px;
+  transform: translate(-50%, -50%) rotate(var(--angle)) translateY(-120px) rotate(calc(-1 * var(--angle)));
   background: white;
-  border: 3px solid #e1e5e9;
-  border-radius: 20px;
-  padding: 20px 15px;
-  text-align: center;
+  border: 3px solid var(--mood-color);
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
   transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  z-index: 5;
 }
 
-.mood-sticker::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: var(--mood-color);
-  opacity: 0.1;
-  transition: opacity 0.3s ease;
+.circular-mood-item:hover {
+  transform: translate(-50%, -50%) rotate(var(--angle)) translateY(-120px) rotate(calc(-1 * var(--angle))) scale(1.1);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
 }
 
-.mood-sticker:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-  border-color: var(--mood-color);
-}
-
-.mood-sticker:hover::before {
-  opacity: 0.2;
-}
-
-.mood-sticker.selected {
-  border-color: var(--mood-color);
+.circular-mood-item.selected {
   background: var(--mood-color);
   color: white;
-  transform: scale(1.05);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  transform: translate(-50%, -50%) rotate(var(--angle)) translateY(-120px) rotate(calc(-1 * var(--angle))) scale(1.2);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
 }
 
-.mood-sticker.selected::before {
-  opacity: 0;
+.circular-mood-item .mood-emoji {
+  font-size: 24px;
+  margin-bottom: 2px;
 }
 
-.mood-emoji {
-  font-size: 32px;
-  margin-bottom: 8px;
-  position: relative;
-  z-index: 1;
-}
-
-.mood-name {
-  font-size: 14px;
+.circular-mood-item .mood-name {
+  font-size: 10px;
   font-weight: 600;
-  position: relative;
-  z-index: 1;
+  text-align: center;
+  line-height: 1.1;
 }
 
-.mood-sticker.selected .mood-name {
+.circular-mood-item.selected .mood-name {
   color: white;
 }
 
+/* 드래그 힌트 */
+.drag-hint {
+  position: absolute;
+  bottom: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  color: #999;
+  text-align: center;
+  white-space: nowrap;
+  opacity: 0.7;
+}
+
+/* 액션 버튼들 */
 .mood-selector-actions {
   display: flex;
   gap: 15px;
   justify-content: center;
+  margin-top: 40px;
 }
 
 .cancel-btn, .confirm-btn {
-  padding: 15px 30px;
-  border-radius: 15px;
+  padding: 12px 30px;
+  border: none;
+  border-radius: 25px;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  border: none;
   min-width: 120px;
 }
 
 .cancel-btn {
-  background: #f8f9fa;
+  background: #f5f5f5;
   color: #666;
-  border: 2px solid #e1e5e9;
 }
 
 .cancel-btn:hover {
-  background: #e9ecef;
-  transform: translateY(-2px);
+  background: #e0e0e0;
+  color: #333;
 }
 
 .confirm-btn {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #505050;
   color: white;
 }
 
 .confirm-btn:hover:not(:disabled) {
+  background: #6a6a6a;
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 15px rgba(80, 80, 80, 0.3);
 }
 
 .confirm-btn:disabled {
-  opacity: 0.5;
+  background: #ccc;
+  color: #999;
   cursor: not-allowed;
   transform: none;
+  box-shadow: none;
 }
 
 /* 반응형 디자인 */
 @media (max-width: 768px) {
   .mood-selector-modal {
     padding: 20px;
-    margin: 10px;
+    max-width: 90vw;
   }
   
-  .mood-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
+  .circular-mood-container {
+    width: 250px;
+    height: 250px;
   }
   
-  .mood-sticker {
-    padding: 15px 10px;
+  .circular-mood-item {
+    width: 70px;
+    height: 70px;
+    transform: translate(-50%, -50%) rotate(var(--angle)) translateY(-100px) rotate(calc(-1 * var(--angle)));
   }
   
-  .mood-emoji {
+  .circular-mood-item:hover {
+    transform: translate(-50%, -50%) rotate(var(--angle)) translateY(-100px) rotate(calc(-1 * var(--angle))) scale(1.1);
+  }
+  
+  .circular-mood-item.selected {
+    transform: translate(-50%, -50%) rotate(var(--angle)) translateY(-100px) rotate(calc(-1 * var(--angle))) scale(1.2);
+  }
+  
+  .circular-mood-item .mood-emoji {
+    font-size: 20px;
+  }
+  
+  .circular-mood-item .mood-name {
+    font-size: 9px;
+  }
+  
+  .center-plus-btn {
+    width: 50px;
+    height: 50px;
     font-size: 28px;
-  }
-  
-  .mood-name {
-    font-size: 12px;
   }
   
   .mood-selector-actions {
     flex-direction: column;
-    align-items: center;
+    gap: 10px;
   }
   
   .cancel-btn, .confirm-btn {
-    width: 100%;
-    max-width: 200px;
+    min-width: 100%;
   }
 }
 
 @media (max-width: 480px) {
-  .mood-grid {
-    grid-template-columns: repeat(2, 1fr);
+  .circular-mood-container {
+    width: 200px;
+    height: 200px;
   }
   
-  .mood-sticker {
-    padding: 12px 8px;
+  .circular-mood-item {
+    width: 60px;
+    height: 60px;
+    transform: translate(-50%, -50%) rotate(var(--angle)) translateY(-80px) rotate(calc(-1 * var(--angle)));
   }
   
-  .mood-emoji {
+  .circular-mood-item:hover {
+    transform: translate(-50%, -50%) rotate(var(--angle)) translateY(-80px) rotate(calc(-1 * var(--angle))) scale(1.1);
+  }
+  
+  .circular-mood-item.selected {
+    transform: translate(-50%, -50%) rotate(var(--angle)) translateY(-80px) rotate(calc(-1 * var(--angle))) scale(1.2);
+  }
+  
+  .circular-mood-item .mood-emoji {
+    font-size: 18px;
+  }
+  
+  .circular-mood-item .mood-name {
+    font-size: 8px;
+  }
+  
+  .center-plus-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 24px;
+  }
+} 
+
+/* 인라인 감정 선택기 - 배경 블러 오버레이 */
+.inline-mood-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+    -webkit-backdrop-filter: blur(0px);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+}
+
+
+/* 인라인 감정 선택기 컨테이너 */
+.inline-mood-container {
+  position: fixed;
+  width: 300px;
+  height: 300px;
+  transform: translate(-50%, -50%);
+  cursor: grab;
+  user-select: none;
+  z-index: 1001;
+  animation: scaleIn 0.3s ease-out;
+}
+
+.inline-mood-container:active {
+  cursor: grabbing;
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+/* 원형으로 배치된 감정 아이템 */
+.inline-mood-item {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 65px;
+  height: 65px;
+  transform: translate(-50%, -50%) rotate(var(--angle)) translateY(-100px) rotate(calc(-1 * var(--angle)));
+  background: white;
+  border: 3px solid var(--mood-color);
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  z-index: 5;
+  animation: moodItemAppear 0.4s ease-out;
+}
+
+@keyframes moodItemAppear {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(var(--angle)) translateY(-70px) rotate(calc(-1 * var(--angle))) scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(var(--angle)) translateY(-100px) rotate(calc(-1 * var(--angle))) scale(1);
+  }
+}
+
+.inline-mood-item:hover {
+  transform: translate(-50%, -50%) rotate(var(--angle)) translateY(-100px) rotate(calc(-1 * var(--angle))) scale(1.2);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  background: var(--mood-color);
+  color: white;
+}
+
+.inline-mood-item .mood-emoji {
+  font-size: 32px;
+  margin: 0;
+}
+
+
+
+/* 드래그 힌트 */
+.inline-drag-hint {
+  position: absolute;
+  bottom: -50px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  color: white;
+  text-align: center;
+  white-space: nowrap;
+  opacity: 0.8;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 5px 10px;
+  border-radius: 15px;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .inline-mood-container {
+    width: 250px;
+    height: 250px;
+  }
+  
+  .inline-mood-item {
+    width: 55px;
+    height: 55px;
+    transform: translate(-50%, -50%) rotate(var(--angle)) translateY(-85px) rotate(calc(-1 * var(--angle)));
+  }
+  
+  @keyframes moodItemAppear {
+    from {
+      opacity: 0;
+      transform: translate(-50%, -50%) rotate(var(--angle)) translateY(-70px) rotate(calc(-1 * var(--angle))) scale(0.5);
+    }
+    to {
+      opacity: 1;
+      transform: translate(-50%, -50%) rotate(var(--angle)) translateY(-100px) rotate(calc(-1 * var(--angle))) scale(1);
+    }
+  }
+  
+  .inline-mood-item:hover {
+    transform: translate(-50%, -50%) rotate(var(--angle)) translateY(-85px) rotate(calc(-1 * var(--angle))) scale(1.2);
+  }
+  
+  .inline-mood-item .mood-emoji {
+    font-size: 28px;
+  }
+}
+
+@media (max-width: 480px) {
+  .inline-mood-container {
+    width: 200px;
+    height: 200px;
+  }
+  
+  .inline-mood-item {
+    width: 50px;
+    height: 50px;
+    transform: translate(-50%, -50%) rotate(var(--angle)) translateY(-70px) rotate(calc(-1 * var(--angle)));
+  }
+  
+  @keyframes moodItemAppear {
+    from {
+      opacity: 0;
+      transform: translate(-50%, -50%) rotate(var(--angle)) translateY(-60px) rotate(calc(-1 * var(--angle))) scale(0.5);
+    }
+    to {
+      opacity: 1;
+      transform: translate(-50%, -50%) rotate(var(--angle)) translateY(-80px) rotate(calc(-1 * var(--angle))) scale(1);
+    }
+  }
+  
+  .inline-mood-item:hover {
+    transform: translate(-50%, -50%) rotate(var(--angle)) translateY(-70px) rotate(calc(-1 * var(--angle))) scale(1.2);
+  }
+  
+  .inline-mood-item .mood-emoji {
     font-size: 24px;
   }
   
-  .mood-name {
+  .inline-drag-hint {
     font-size: 11px;
+    bottom: -40px;
   }
 } 

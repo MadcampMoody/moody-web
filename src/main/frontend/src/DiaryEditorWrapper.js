@@ -21,7 +21,6 @@ function DiaryEditorWrapper() {
           TIRED: { emoji: "😴", name: "피곤해요" },
           SAD: { emoji: "😢", name: "슬퍼요" },
           WORRIED: { emoji: "😟", name: "걱정돼요" },
-          BORED: { emoji: "😒", name: "지루해요" },
           HAPPY: { emoji: "😊", name: "행복해요" },
           CALM: { emoji: "😌", name: "침착해요" },
           EXCITED: { emoji: "😃", name: "신나요" },
