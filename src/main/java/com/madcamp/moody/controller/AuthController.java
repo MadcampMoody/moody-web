@@ -4,7 +4,6 @@ import com.madcamp.moody.music.MusicGenre;
 import com.madcamp.moody.music.MusicRegion;
 import com.madcamp.moody.user.User;
 import com.madcamp.moody.user.UserRepository;
-import com.madcamp.moody.user.OnboardingRequestDTO;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -29,35 +28,11 @@ import java.util.ArrayList;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
+@CrossOrigin(origins = "http://127.0.0.1:3000", allowCredentials = "true")
 public class AuthController {
 
     @Autowired
     private UserRepository userRepository;
-
-    @PostMapping("/onboarding")
-    public ResponseEntity<?> completeOnboarding(@AuthenticationPrincipal OAuth2User oauth2User, @RequestBody OnboardingRequestDTO request) {
-        if (oauth2User == null) {
-            return ResponseEntity.status(401).body(Map.of("error", "인증되지 않은 사용자"));
-        }
-
-        String oauthId = oauth2User.getAttribute("id").toString();
-        User user = userRepository.findByOauthId(oauthId);
-
-        if (user == null) {
-            return ResponseEntity.status(404).body(Map.of("error", "사용자를 찾을 수 없음"));
-        }
-
-        // 온보딩 정보 업데이트
-        user.setName(request.getName());
-        user.setMusicRegion(request.getMusicRegion());
-        user.setMusicGenresList(request.getMusicGenres());
-        user.setOnboardingCompleted(true);
-
-        userRepository.save(user);
-
-        return ResponseEntity.ok(Map.of("message", "온보딩 성공"));
-    }
 
     @GetMapping("/user")
     public ResponseEntity<?> getCurrentUser(@AuthenticationPrincipal OAuth2User oauth2User) {

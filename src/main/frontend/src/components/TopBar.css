@@ -159,7 +159,7 @@ body {
   padding: 0;
 }
 
-.dashboard-container {
+.dashboard-container{
   padding-top: 100px !important; /* TopBar 높이(65px) + 여유 공간(15px) */
   min-height: 100vh;
   box-sizing: border-box;
