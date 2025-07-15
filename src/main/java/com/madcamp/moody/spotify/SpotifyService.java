@@ -21,6 +21,14 @@ import com.madcamp.moody.music.MusicRegion;
 import java.util.ArrayList;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.HashMap;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.core.user.OAuth2User;
+
+import com.madcamp.moody.user.User;
+import com.madcamp.moody.user.UserRepository;
 
 @Service
 public class SpotifyService {
@@ -50,6 +58,235 @@ public class SpotifyService {
     @Autowired
     public SpotifyService(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
+    }
+
+    @Autowired
+    private UserRepository userRepository;
+
+    /**
+     * 현재 로그인된 사용자의 Spotify 액세스 토큰을 반환
+     * 카카오 인증과 완전히 분리된 Spotify 전용 토큰 처리
+     */
+    public String getCurrentUserSpotifyAccessToken() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return null;
+        }
+
+        // OAuth2User에서 사용자 식별
+        if (authentication.getPrincipal() instanceof OAuth2User) {
+            OAuth2User oauth2User = (OAuth2User) authentication.getPrincipal();
+            
+            // 먼저 Spotify 사용자인지 확인 (display_name 속성이 있으면 Spotify)
+            String spotifyDisplayName = oauth2User.getAttribute("display_name");
+            if (spotifyDisplayName != null) {
+                // Spotify 로그인 사용자
+                String spotifyId = oauth2User.getAttribute("id");
+                User user = userRepository.findBySpotifyOauthId(spotifyId);
+                if (user != null && user.getSpotifyAccessToken() != null) {
+                    return user.getSpotifyAccessToken();
+                }
+            } else {
+                // 카카오 로그인 사용자 - Spotify 연동 여부 확인
+                String kakaoId = String.valueOf(oauth2User.getAttribute("id"));
+                User user = userRepository.findByOauthId(kakaoId);
+                if (user != null && user.getSpotifyAccessToken() != null) {
+                    return user.getSpotifyAccessToken();
+                }
+            }
+        }
+        
+        return null;
+    }
+
+    /**
+     * 사용자가 Spotify에 연동되어 있는지 확인
+     */
+    public boolean isCurrentUserSpotifyLinked() {
+        String accessToken = getCurrentUserSpotifyAccessToken();
+        return accessToken != null && !accessToken.isEmpty();
+    }
+
+    /**
+     * Spotify 재생 시작 (최근 재생한 곡 또는 기본 플레이리스트)
+     */
+    public boolean startSpotifyPlayback(String deviceId) {
+        String accessToken = getCurrentUserSpotifyAccessToken();
+        if (accessToken == null) {
+            System.err.println("Spotify 액세스 토큰이 없습니다");
+            return false;
+        }
+
+        try {
+            System.out.println("=== Spotify 재생 시작 요청 ===");
+            System.out.println("Device ID: " + deviceId);
+            
+            // 사용 가능한 디바이스 확인
+            if (!checkAvailableDevices(accessToken, deviceId)) {
+                System.err.println("사용 가능한 디바이스가 없거나 지정된 디바이스를 찾을 수 없습니다.");
+                return false;
+            }
+            
+            // 먼저 최근 재생한 곡들 가져오기
+            String recentlyPlayedUrl = "https://api.spotify.com/v1/me/player/recently-played?limit=1";
+            
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("Authorization", "Bearer " + accessToken);
+            headers.set("Content-Type", "application/json");
+            
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+            System.out.println("최근 재생 곡 조회 중...");
+            
+            ResponseEntity<Map> recentResponse = restTemplate.exchange(
+                recentlyPlayedUrl, HttpMethod.GET, entity, Map.class);
+            
+            System.out.println("최근 재생 곡 조회 응답: " + recentResponse.getStatusCode());
+
+            String trackUri = null;
+            if (recentResponse.getStatusCode().is2xxSuccessful() && recentResponse.getBody() != null) {
+                Map<String, Object> recentData = recentResponse.getBody();
+                List<Map<String, Object>> items = (List<Map<String, Object>>) recentData.get("items");
+                
+                if (items != null && !items.isEmpty()) {
+                    Map<String, Object> track = (Map<String, Object>) items.get(0).get("track");
+                    trackUri = (String) track.get("uri");
+                    System.out.println("최근 재생한 곡 발견: " + trackUri);
+                }
+            }
+
+            // 재생 시작 요청
+            String playUrl = "https://api.spotify.com/v1/me/player/play";
+            if (deviceId != null && !deviceId.isEmpty()) {
+                playUrl += "?device_id=" + deviceId;
+            }
+            
+            System.out.println("재생 요청 URL: " + playUrl);
+
+            Map<String, Object> playData = new HashMap<>();
+            if (trackUri != null) {
+                // 최근 재생한 곡이 있으면 그것을 재생
+                playData.put("uris", List.of(trackUri));
+                System.out.println("재생할 곡 URI: " + trackUri);
+            } else {
+                System.out.println("최근 재생한 곡이 없어서 빈 요청으로 진행");
+            }
+
+            HttpEntity<Map<String, Object>> playEntity = new HttpEntity<>(playData, headers);
+            System.out.println("재생 요청 전송 중...");
+            
+            ResponseEntity<String> playResponse = restTemplate.exchange(
+                playUrl, HttpMethod.PUT, playEntity, String.class);
+
+            System.out.println("재생 요청 응답 상태: " + playResponse.getStatusCode());
+            System.out.println("재생 요청 응답 본문: " + playResponse.getBody());
+            
+            boolean success = playResponse.getStatusCode().is2xxSuccessful();
+            System.out.println("Spotify 재생 시작 결과: " + success);
+            return success;
+
+        } catch (org.springframework.web.client.HttpClientErrorException e) {
+            System.err.println("Spotify API HTTP 오류: " + e.getStatusCode());
+            System.err.println("오류 응답 본문: " + e.getResponseBodyAsString());
+            System.err.println("요청한 URL이나 권한에 문제가 있을 수 있습니다.");
+            return false;
+        } catch (Exception e) {
+            System.err.println("Spotify 재생 시작 오류: " + e.getMessage());
+            System.err.println("오류 타입: " + e.getClass().getSimpleName());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * 사용 가능한 디바이스 확인
+     */
+    private boolean checkAvailableDevices(String accessToken, String targetDeviceId) {
+        try {
+            String devicesUrl = "https://api.spotify.com/v1/me/player/devices";
+            
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("Authorization", "Bearer " + accessToken);
+            headers.set("Content-Type", "application/json");
+            
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+            ResponseEntity<Map> devicesResponse = restTemplate.exchange(
+                devicesUrl, HttpMethod.GET, entity, Map.class);
+            
+            if (devicesResponse.getStatusCode().is2xxSuccessful() && devicesResponse.getBody() != null) {
+                Map<String, Object> devicesData = devicesResponse.getBody();
+                List<Map<String, Object>> devices = (List<Map<String, Object>>) devicesData.get("devices");
+                
+                System.out.println("사용 가능한 디바이스 수: " + (devices != null ? devices.size() : 0));
+                
+                if (devices == null || devices.isEmpty()) {
+                    System.err.println("활성화된 Spotify 디바이스가 없습니다. Spotify 앱을 열어주세요.");
+                    return false;
+                }
+                
+                // 디바이스 목록 출력
+                for (Map<String, Object> device : devices) {
+                    String id = (String) device.get("id");
+                    String name = (String) device.get("name");
+                    String type = (String) device.get("type");
+                    Boolean isActive = (Boolean) device.get("is_active");
+                    System.out.println("디바이스: " + name + " (ID: " + id + ", 타입: " + type + ", 활성: " + isActive + ")");
+                }
+                
+                // 지정된 디바이스 ID가 있으면 확인
+                if (targetDeviceId != null && !targetDeviceId.isEmpty()) {
+                    boolean deviceFound = devices.stream()
+                        .anyMatch(device -> targetDeviceId.equals(device.get("id")));
+                    if (!deviceFound) {
+                        System.err.println("지정된 디바이스 ID를 찾을 수 없습니다: " + targetDeviceId);
+                        return false;
+                    }
+                }
+                
+                return true;
+            } else {
+                System.err.println("디바이스 조회 실패: " + devicesResponse.getStatusCode());
+                return false;
+            }
+            
+        } catch (Exception e) {
+            System.err.println("디바이스 확인 오류: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Spotify 재생 제어 (재생/일시정지)
+     */
+    public boolean controlSpotifyPlayback(String action, String deviceId) {
+        String accessToken = getCurrentUserSpotifyAccessToken();
+        if (accessToken == null) {
+            return false;
+        }
+
+        try {
+            String url = "https://api.spotify.com/v1/me/player/" + action;
+            if (deviceId != null && !deviceId.isEmpty()) {
+                url += "?device_id=" + deviceId;
+            }
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("Authorization", "Bearer " + accessToken);
+            headers.set("Content-Type", "application/json");
+
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+            ResponseEntity<String> response = restTemplate.exchange(
+                url, HttpMethod.PUT, entity, String.class);
+
+            boolean success = response.getStatusCode().is2xxSuccessful();
+            System.out.println("Spotify " + action + " 결과: " + success);
+            return success;
+
+        } catch (Exception e) {
+            System.err.println("Spotify " + action + " 오류: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
     }
     
     private String getAccessToken() {
