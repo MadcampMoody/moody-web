@@ -22,10 +22,10 @@ function App() {
     // 에러 메시지 초기화
     setError('');
     // 카카오 OAuth2 로그인 URL로 리다이렉트
-    window.location.href = 'http://localhost:8080/oauth2/authorization/kakao';
+    window.location.href = 'http://127.0.0.1:8080/oauth2/authorization/kakao';
   };
 
-  // 메인 페이지 (카카오 로그인 페이지)
+  // 메인 페이지 (로그인 페이지)
   const LoginPage = () => {
     return (
       <div className="App">

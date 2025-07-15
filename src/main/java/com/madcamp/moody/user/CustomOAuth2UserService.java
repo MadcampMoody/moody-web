@@ -58,7 +58,12 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             
             if (user == null) {
                 // 새 사용자 생성
-                user = new User(null, name, email, oauthId, null, "[]", false);
+                user = new User();
+                user.setName(name);
+                user.setEmail(email);
+                user.setOauthId(oauthId);
+                user.setMusicGenres("[]");
+                user.setOnboardingCompleted(false);
                 userRepository.save(user);
             } else {
                 // 기존 사용자 정보 업데이트

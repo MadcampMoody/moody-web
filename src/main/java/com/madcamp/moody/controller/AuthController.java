@@ -28,7 +28,7 @@ import java.util.ArrayList;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
+@CrossOrigin(origins = "http://127.0.0.1:3000", allowCredentials = "true")
 public class AuthController {
 
     @Autowired
@@ -58,7 +58,8 @@ public class AuthController {
             
             System.out.println("OAuth ID: " + oauthId);
             
-            User user = userRepository.findByOauthId(oauthId);
+            // getCurrentAuthenticatedUser 메서드를 사용하여 Spotify/Kakao 모두 처리
+            User user = getCurrentAuthenticatedUser(oauth2User);
             System.out.println("User from DB: " + (user != null ? "found" : "not found"));
 
             if (user == null) {
@@ -114,6 +115,98 @@ public class AuthController {
         }
     }
 
+    @GetMapping("/spotify-status")
+    public ResponseEntity<?> checkSpotifyAuth(@AuthenticationPrincipal OAuth2User oauth2User, HttpServletRequest request) {
+        try {
+            System.out.println("=== checkSpotifyAuth called ===");
+            System.out.println("OAuth2User: " + (oauth2User != null ? "present" : "null"));
+            
+            // 현재 로그인한 카카오 사용자 확인
+            User currentUser = getCurrentAuthenticatedUser(oauth2User);
+            if (currentUser == null) {
+                System.out.println("현재 인증된 사용자가 없습니다");
+                return ResponseEntity.ok(Map.of("spotifyLoggedIn", false));
+            }
+            
+            System.out.println("현재 사용자: " + currentUser.getName() + " (ID: " + currentUser.getId() + ")");
+            
+            // User 테이블에서 Spotify 연동 정보 확인
+            if (currentUser.isSpotifyLinked()) {
+                System.out.println("Spotify 연동 확인됨: " + currentUser.getSpotifyDisplayName());
+                return ResponseEntity.ok(Map.of("spotifyLoggedIn", true));
+            } else {
+                System.out.println("Spotify 연동 정보 없음");
+                return ResponseEntity.ok(Map.of("spotifyLoggedIn", false));
+            }
+            
+        } catch (Exception e) {
+            System.err.println("Error in checkSpotifyAuth: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(Map.of("error", "서버 오류가 발생했습니다"));
+        }
+    }
+    
+    /**
+     * 현재 인증된 사용자 정보 가져오기
+     */
+    private User getCurrentAuthenticatedUser(OAuth2User oauth2User) {
+        try {
+            System.out.println("=== getCurrentAuthenticatedUser called ===");
+            
+            if (oauth2User == null) {
+                System.out.println("OAuth2User is null");
+                return null;
+            }
+            
+            // OAuth2User의 id 속성을 안전하게 처리
+            Object idAttribute = oauth2User.getAttribute("id");
+            String oauthId;
+            
+            if (idAttribute instanceof Long) {
+                oauthId = String.valueOf((Long) idAttribute);
+            } else if (idAttribute instanceof String) {
+                oauthId = (String) idAttribute;
+            } else {
+                oauthId = String.valueOf(idAttribute);
+            }
+            
+            System.out.println("OAuth ID: " + oauthId);
+            
+            // 현재 OAuth2User가 Spotify 사용자인지 확인
+            String displayName = oauth2User.getAttribute("display_name");
+            String country = oauth2User.getAttribute("country");
+            boolean isSpotifyUser = (displayName != null) || (country != null);
+            
+            System.out.println("isSpotifyUser: " + isSpotifyUser + " (displayName: " + displayName + ", country: " + country + ")");
+            
+            if (isSpotifyUser) {
+                System.out.println("Spotify 사용자로 인식됨 - User 테이블에서 Spotify OAuth ID로 찾는 중...");
+                // Spotify 사용자라면 User 테이블에서 spotify_oauth_id로 찾기
+                User spotifyUser = userRepository.findBySpotifyOauthId(oauthId);
+                System.out.println("Spotify User found: " + (spotifyUser != null ? "yes" : "no"));
+                
+                if (spotifyUser != null) {
+                    System.out.println("Spotify User details - Name: " + spotifyUser.getName() + ", DisplayName: " + spotifyUser.getSpotifyDisplayName());
+                    return spotifyUser;
+                }
+                System.out.println("Spotify 사용자를 찾을 수 없음");
+                return null;
+            } else {
+                System.out.println("카카오 사용자로 인식됨 - User 테이블에서 직접 찾는 중...");
+                // 카카오 사용자라면 직접 찾기
+                User user = userRepository.findByOauthId(oauthId);
+                System.out.println("Kakao User found: " + (user != null ? "yes (name: " + user.getName() + ")" : "no"));
+                return user;
+            }
+        } catch (Exception e) {
+            System.err.println("현재 사용자 조회 실패: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        } finally {
+            System.out.println("=== getCurrentAuthenticatedUser ended ===");
+        }
+    }
+
     // OAuth2 성공 콜백 처리
     @GetMapping("/success")
     public ResponseEntity<?> oauth2Success(@AuthenticationPrincipal OAuth2User oauth2User, HttpServletRequest request) {
@@ -124,7 +217,7 @@ public class AuthController {
             if (oauth2User == null) {
                 System.out.println("OAuth2User is null, redirecting to login with error");
                 return ResponseEntity.status(302)
-                    .header("Location", "http://localhost:3000/?error=true")
+                    .header("Location", "http://127.0.0.1:3000/?error=true")
                     .build();
             }
             
@@ -148,7 +241,7 @@ public class AuthController {
             if (user == null) {
                 System.out.println("User not found in database, redirecting to login with error");
                 return ResponseEntity.status(302)
-                    .header("Location", "http://localhost:3000/?error=true")
+                    .header("Location", "http://127.0.0.1:3000/?error=true")
                     .build();
             }
             
@@ -160,7 +253,7 @@ public class AuthController {
             
             System.out.println("Authentication successful, redirecting to dashboard");
             // 성공 시 React 앱의 대시보드로 리다이렉트 (토큰을 URL 파라미터로 전달)
-            String redirectUrl = "http://localhost:3000/dashboard";
+            String redirectUrl = "http://127.0.0.1:3000/dashboard";
             if (accessToken != null) {
                 redirectUrl += "?token=" + accessToken;
             }
@@ -173,7 +266,7 @@ public class AuthController {
             System.err.println("Error in oauth2Success: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(302)
-                .header("Location", "http://localhost:3000/?error=true")
+                .header("Location", "http://127.0.0.1:3000/?error=true")
                 .build();
         }
     }
@@ -184,7 +277,7 @@ public class AuthController {
         System.out.println("OAuth2 Failure callback called");
         // 실패 시 React 앱의 로그인 페이지로 리다이렉트
         return ResponseEntity.status(302)
-            .header("Location", "http://localhost:3000/?error=true")
+            .header("Location", "http://127.0.0.1:3000/?error=true")
             .build();
     }
 
@@ -283,7 +376,7 @@ public class AuthController {
     public ResponseEntity<?> logoutSuccess() {
         // 로그아웃 시 React 앱의 로그인 페이지로 리다이렉트
         return ResponseEntity.status(302)
-            .header("Location", "http://localhost:3000/")
+            .header("Location", "http://127.0.0.1:3000/")
             .build();
     }
 }
