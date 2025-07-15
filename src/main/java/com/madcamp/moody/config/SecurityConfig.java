@@ -19,6 +19,11 @@ import java.util.Arrays;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import com.madcamp.moody.user.User;
+import com.madcamp.moody.user.UserRepository;
+import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 
 @Configuration
 @EnableWebSecurity
@@ -28,14 +33,17 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http, OAuth2UserServiceRouter oAuth2UserServiceRouter) throws Exception {
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .csrf(csrf -> csrf
-                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                .ignoringRequestMatchers("/api/**", "/logout") // API 요청과 로그아웃은 CSRF 제외
-            )
+
+        
+            // CSRF 보호를 API 경로에 대해 비활성화
+            .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**"))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/login", "/css/**", "/js/**", "/images/**", "/api/public/**").permitAll()
+                .requestMatchers("/", "/login", "/css/**", "/js/**", "/images/**", "/error", "/favicon.ico").permitAll()
                 .requestMatchers("/api/**").authenticated()
-                .anyRequest().authenticated()
+                .anyRequest().permitAll()
+            )
+            .exceptionHandling(e -> e
+                .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
             )
             .oauth2Login(oauth2 -> oauth2
                 .userInfoEndpoint(userInfo -> userInfo
@@ -58,56 +66,29 @@ public class SecurityConfig {
 
     @Bean
     public AuthenticationSuccessHandler authenticationSuccessHandler() {
-        return new SimpleUrlAuthenticationSuccessHandler() {
-            @Override
-            public void onAuthenticationSuccess(HttpServletRequest request, 
-                                            HttpServletResponse response, 
-                                            org.springframework.security.core.Authentication authentication) 
-                                            throws IOException, ServletException {
-                
-                // OAuth2 사용자 정보 가져오기
-                if (authentication.getPrincipal() instanceof org.springframework.security.oauth2.core.user.OAuth2User) {
-                    org.springframework.security.oauth2.core.user.OAuth2User oauth2User = 
-                        (org.springframework.security.oauth2.core.user.OAuth2User) authentication.getPrincipal();
-                    
-                    // Spotify 사용자인지 확인
-                    String displayName = oauth2User.getAttribute("display_name");
-                    String country = oauth2User.getAttribute("country");
-                    boolean isSpotifyUser = (displayName != null) || (country != null);
-                    
-                    System.out.println("=== Authentication Success Handler ===");
-                    System.out.println("사용자 타입: " + (isSpotifyUser ? "Spotify" : "카카오"));
-                    System.out.println("사용자 ID: " + oauth2User.getAttribute("id"));
-                    System.out.println("세션 ID: " + request.getSession().getId());
-                    
-                    // 세션에 로그인 제공자 정보 저장
-                    jakarta.servlet.http.HttpSession session = request.getSession();
-                    if (isSpotifyUser) {
-                        session.setAttribute("spotify_logged_in", true);
-                        session.setAttribute("spotify_user_id", oauth2User.getAttribute("id"));
-                        System.out.println("Spotify 로그인 정보를 세션에 저장");
-                        
-                        // Spotify 사용자도 dashboard로 리다이렉트
-                        System.out.println("Spotify 사용자를 dashboard로 리다이렉트");
-                    } else {
-                        session.setAttribute("kakao_logged_in", true);
-                        session.setAttribute("kakao_user_id", oauth2User.getAttribute("id"));
-                        System.out.println("카카오 로그인 정보를 세션에 저장");
-                    }
-                }
-                
-                getRedirectStrategy().sendRedirect(request, response, "http://127.0.0.1:3000/dashboard");
+        return (request, response, authentication) -> {
+            OAuth2User oauth2User = (OAuth2User) authentication.getPrincipal();
+            String oauthId = oauth2User.getAttribute("id").toString();
+            
+            User user = userRepository.findByOauthId(oauthId);
+            
+            String redirectUrl;
+            if (user != null && user.isOnboardingCompleted()) {
+                redirectUrl = "http://127.0.0.1:3000/dashboard";
+            } else {
+                redirectUrl = "http://127.0.0.1:3000/onboarding";
             }
         };
     }
-
+    
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(Arrays.asList("http://127.0.0.1:3000"));
+        configuration.setAllowedOrigins(Collections.singletonList("http://127.0.0.1:3000")); // 127.0.0.1로 통일
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
+        configuration.setMaxAge(3600L);
         configuration.setExposedHeaders(Arrays.asList("Authorization"));
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

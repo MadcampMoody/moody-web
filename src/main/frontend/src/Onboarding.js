@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Onboarding.css";
-import axios from 'axios'; // axios import
+import axios from './axios-instance'; // 수정된 axios 인스턴스 import
 
 function Onboarding() {
   const [step, setStep] = useState(1);
@@ -57,9 +57,9 @@ function Onboarding() {
         musicGenres: userData.musicGenres
       };
       
+      // 이제 baseURL과 withCredentials가 자동으로 적용됩니다.
       await axios.post('/api/auth/onboarding', dataToSend, {
         headers: { 'Content-Type': 'application/json' },
-        withCredentials: true,
       });
 
       navigate('/dashboard');

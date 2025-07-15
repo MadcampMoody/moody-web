@@ -179,7 +179,7 @@
 .calendar-days {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
+  gap: 8px; /* 간격을 8px로 늘림 */
   flex: 1;
 }
 
