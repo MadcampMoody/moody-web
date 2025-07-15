@@ -27,9 +27,14 @@ function App() {
 
   // 메인 페이지 (로그인 페이지)
   const LoginPage = () => {
+    const [showKakao, setShowKakao] = useState(false);
+    useEffect(() => {
+      const timer = setTimeout(() => setShowKakao(true), 1000);
+      return () => clearTimeout(timer);
+    }, []);
     return (
-      <div className="App">
-        <div className="login-container">
+      <div className="App login-bg">
+        <div className="login-card">
           <div className="logo-section">
             <img 
               src="/moody_logo.png" 
@@ -37,6 +42,8 @@ function App() {
               className="moody-logo"
             />
           </div>
+          <h1 className="service-title">moody</h1>
+          <p className="service-desc">오늘의 감정을 기록하고, 나를 더 잘 이해해보세요</p>
           <div className="login-section">
             {error && (
               <div className="error-message">
@@ -44,8 +51,9 @@ function App() {
               </div>
             )}
             <button 
-              className="kakao-login-btn"
+              className={`kakao-login-btn fade-in-btn${showKakao ? ' visible' : ''}`}
               onClick={handleKakaoLogin}
+              disabled={!showKakao}
             >
               카카오 로그인하기
             </button>

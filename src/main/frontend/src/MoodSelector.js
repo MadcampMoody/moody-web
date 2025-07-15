@@ -113,7 +113,7 @@ function MoodSelector({ selectedDate, onClose, onMoodSelect, plusButtonRef }) {
           onClick={handleSetChange}
           title="다른 감정 보기"
         >
-          ⟲
+          <img src={require('./assets/change-icon.png')} alt="change" className="change-icon-svg" />
         </div>
 
         {/* 원형으로 배치된 감정들 */}

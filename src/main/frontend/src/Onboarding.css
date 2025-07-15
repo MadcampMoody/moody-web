@@ -7,25 +7,59 @@
   padding: 20px;
 }
 
-.onboarding-card {
-  background: white; /* 흰색 카드 배경 */
-  color: #505050; /* 카드 내부 기본 글씨색 */
-  border-radius: 20px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
-  padding: 50px; /* 내부 여백 증가 */
-  max-width: 700px; /* 최대 너비 증가 */
-  width: 100%;
+.onboarding-title {
+  font-size: 3.2rem;
+  font-weight: 900;
+  color: #505050;
+  margin: 0 0 6px 0;
+  letter-spacing: 2px;
   text-align: center;
 }
 
+.onboarding-card {
+  background: white;
+  color: #505050;
+  border-radius: 36px;
+  box-shadow: 0 12px 48px rgba(80, 80, 80, 0.18), 0 2px 8px rgba(80, 80, 80, 0.10);
+  padding: 48px 32px 32px 32px;
+  max-width: 600px;
+  width: 100%;
+  min-height: 400px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 36px;
+  transition: box-shadow 0.3s;
+}
+
 .onboarding-header {
-  margin-bottom: 40px;
+  margin-bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.onboarding-logo-wrapper {
+  background: #505050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 40px;
+  padding: 32px;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.10);
+  margin-bottom: 0;
 }
 
 .onboarding-logo {
-  width: 120px;
-  height: auto;
-  margin-bottom: 20px;
+  width: 160px;
+  height: 160px;
+  border-radius: 24px;
+  background: #fff;
+  border: none;
+  box-shadow: none;
+  margin-bottom: 0;
 }
 
 .onboarding-header h1 {
@@ -36,18 +70,23 @@
 }
 
 .onboarding-step {
-  animation: fadeIn 0.5s ease-in-out;
-  min-height: 300px; /* 최소 높이 지정 */
+  animation: fadeIn 0.8s ease-in-out;
   display: flex;
   flex-direction: column;
-  justify-content: center; /* 세로 중앙 정렬 */
+  align-items: center;
+  gap: 32px;
+  width: 100%;
+  min-height: 300px;
+  justify-content: center;
 }
 
 .onboarding-step h2 {
-  color: #333; /* 어두운 글씨 */
-  font-size: 20px;
-  margin-bottom: 10px;
-  font-weight: 600;
+  font-size: 1.45rem;
+  font-weight: 400;
+  color: #505050;
+  margin: 0 0 8px 0;
+  text-align: center;
+  opacity: 0.95;
 }
 
 .onboarding-step p {
@@ -60,21 +99,24 @@
 .nickname-form {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 32px;
   align-items: center;
+  width: 100%;
 }
 
 .nickname-input {
   width: 100%;
-  max-width: 300px;
-  padding: 15px 20px;
-  border: 2px solid #e1e5e9; /* 밝은 테두리 */
-  border-radius: 10px;
-  font-size: 16px;
+  min-width: 320px;
+  max-width: 320px;
+  padding: 22px 0;
+  border: 2px solid #e1e5e9;
+  border-radius: 16px;
+  font-size: 1.45rem;
   transition: all 0.3s ease;
   outline: none;
-  background: #f8f9fa; /* 밝은 인풋 배경 */
-  color: #333; /* 어두운 인풋 글씨 */
+  background: #f8f9fa;
+  color: #333;
+  text-align: center;
 }
 
 .nickname-input::placeholder {
@@ -86,17 +128,19 @@
   box-shadow: 0 0 0 3px rgba(80, 80, 80, 0.1);
 }
 
-.next-btn, .complete-btn {
-  background: #505050; /* 포인트 색상 배경 */
-  color: white; /* 흰색 글씨 */
+.next-btn {
+  background: #505050;
+  color: white;
   border: none;
-  padding: 15px 30px;
-  border-radius: 10px;
-  font-size: 16px;
-  font-weight: 600;
+  padding: 22px 0;
+  border-radius: 16px;
+  font-size: 1.45rem;
+  font-weight: 800;
   cursor: pointer;
   transition: all 0.3s ease;
-  min-width: 120px;
+  min-width: 320px;
+  margin-top: 0;
+  letter-spacing: 0.5px;
 }
 
 .next-btn:hover:not(:disabled), .complete-btn:hover:not(:disabled) {
@@ -114,72 +158,87 @@
 .music-region-selection {
   display: flex;
   flex-direction: column;
-  gap: 15px;
-  margin-bottom: 30px;
+  gap: 22px;
+  align-items: center;
+  width: 100%;
+  margin: 6px 0 6px 0;
 }
 
 .region-btn {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 18px;
   background: #f8f9fa;
-  border: 2px solid #e1e5e9;
+  border: 2.5px solid #e1e5e9;
   color: #333;
-  padding: 20px;
-  border-radius: 12px;
-  font-size: 16px;
-  font-weight: 500;
+  padding: 26px 28px;
+  border-radius: 18px;
+  font-size: 1.18rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s cubic-bezier(.4,2,.6,1);
   text-align: left;
   width: 100%;
+  max-width: 420px;
+  box-shadow: 0 2px 10px rgba(80,80,80,0.06);
+  margin: 0 auto;
 }
 
 .region-btn:hover {
-  border-color: #667eea;
-  background: #f0f2ff;
-  transform: translateY(-2px);
+  border-color: #505050;
+  background: #f0f2f5;
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 4px 16px rgba(80,80,80,0.10);
 }
 
 .region-btn.selected {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border-color: #667eea;
-  transform: scale(1.02);
+  background: linear-gradient(135deg, #505050 0%, #7a7a7a 100%);
+  color: #fff;
+  border-color: #505050;
+  transform: scale(1.03);
+  box-shadow: 0 6px 24px rgba(80,80,80,0.13);
+}
+
+.region-btn.selected .region-text p {
+  color: #fff;
+  opacity: 1;
 }
 
 .region-icon {
-  font-size: 24px;
-  min-width: 40px;
+  font-size: 2.1rem;
+  min-width: 44px;
   text-align: center;
 }
 
 .region-text h3 {
-  margin: 0 0 5px 0;
-  font-size: 18px;
-  font-weight: 600;
+  margin: 0 0 4px 0;
+  font-size: 1.18rem;
+  font-weight: 700;
 }
 
 .region-text p {
   margin: 0;
-  font-size: 14px;
-  opacity: 0.8;
+  font-size: 0.98rem;
+  opacity: 0.85;
 }
 
 .music-preferences {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
   margin-bottom: 30px;
+  width: 100%;
+  max-width: 700px;
 }
 
 .genre-btn {
-  background: #f8f9fa; /* 밝은 배경 */
+  background: #f8f9fa;
   border: 2px solid #e1e5e9;
-  color: #333; /* 어두운 글씨 */
-  padding: 12px 16px;
-  border-radius: 8px;
-  font-size: 14px;
+  color: #333;
+  padding: 18px 0;
+  min-height: 54px;
+  border-radius: 14px;
+  font-size: 1.15rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -199,27 +258,77 @@
 
 .onboarding-actions {
   display: flex;
-  gap: 15px;
+  flex-direction: row;
+  gap: 16px;
   justify-content: center;
-  margin-top: 20px;
+  align-items: center;
+  width: 100%;
+  margin-top: 2px;
+}
+
+.back-btn, .next-btn {
+  min-width: 140px;
+  max-width: 220px;
+  padding: 16px 0;
+  font-size: 1.1rem;
+  border-radius: 12px;
+  font-weight: 700;
+  margin: 0;
+  box-shadow: 0 2px 8px rgba(80,80,80,0.08);
+  border: none;
+  transition: all 0.2s;
 }
 
 .back-btn {
-  background: #6c757d; /* 기본 회색 */
-  color: white;
-  border: none;
-  padding: 15px 30px;
-  border-radius: 10px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  min-width: 120px;
+  background: #6e7780;
+  color: #fff;
 }
 
 .back-btn:hover {
-  background: #5a6268;
-  transform: translateY(-2px);
+  background: #505050;
+}
+
+.next-btn {
+  background: #505050;
+  color: #fff;
+}
+
+.next-btn:disabled {
+  background: #b0b0b0;
+  color: #fff;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.complete-btn {
+  min-width: 140px;
+  max-width: 220px;
+  padding: 16px 0;
+  font-size: 1.1rem;
+  border-radius: 12px;
+  font-weight: 700;
+  margin: 0;
+  box-shadow: 0 2px 8px rgba(80,80,80,0.08);
+  border: none;
+  background: #505050;
+  color: #fff;
+  transition: all 0.2s;
+}
+
+.complete-btn:disabled {
+  background: #b0b0b0;
+  color: #fff;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.multi-select-hint {
+  font-size: 0.98rem;
+  color: #888;
+  margin-left: 4px;
+  font-weight: 400;
+  align-self: flex-end;
+  line-height: 1.2;
 }
 
 @keyframes fadeIn {
@@ -233,17 +342,92 @@
   }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 700px) {
   .onboarding-card {
-    padding: 30px 20px;
+    padding: 20px 4vw 16px 4vw;
+    max-width: 98vw;
+    min-height: 220px;
+    border-radius: 18px;
+    gap: 18px;
   }
-  
+  .onboarding-logo-wrapper {
+    padding: 14px;
+    border-radius: 18px;
+  }
+  .onboarding-logo {
+    width: 80px;
+    height: 80px;
+    border-radius: 10px;
+  }
+  .onboarding-title {
+    font-size: 2rem;
+  }
+  .onboarding-step {
+    gap: 18px;
+  }
+  .nickname-form {
+    gap: 18px;
+  }
+  .nickname-input {
+    min-width: 180px;
+    max-width: 98vw;
+    padding: 14px 0;
+    border-radius: 10px;
+    font-size: 1.05rem;
+  }
+  .next-btn {
+    min-width: 180px;
+    padding: 14px 0;
+    border-radius: 10px;
+    font-size: 1.05rem;
+  }
+  .music-region-selection {
+    gap: 12px;
+    margin: 12px 0 18px 0;
+  }
+  .region-btn {
+    padding: 14px 8px;
+    border-radius: 10px;
+    font-size: 1rem;
+    max-width: 98vw;
+  }
+  .region-icon {
+    font-size: 1.3rem;
+    min-width: 28px;
+  }
+  .region-text h3 {
+    font-size: 1rem;
+  }
+  .region-text p {
+    font-size: 0.85rem;
+  }
+  .onboarding-actions {
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .back-btn, .next-btn {
+    min-width: 80px;
+    max-width: 100px;
+    font-size: 0.98rem;
+    padding: 10px 0;
+    border-radius: 8px;
+  }
   .music-preferences {
     grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    max-width: 98vw;
   }
-  
-  .onboarding-actions {
-    flex-direction: column;
-    align-items: center;
+  .complete-btn {
+    min-width: 80px;
+    max-width: 100px;
+    font-size: 0.98rem;
+    padding: 10px 0;
+    border-radius: 8px;
+  }
+  .genre-btn {
+    padding: 10px 0;
+    min-height: 36px;
+    border-radius: 8px;
+    font-size: 1rem;
   }
 } 
