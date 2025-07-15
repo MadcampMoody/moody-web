@@ -1,9 +1,11 @@
 import axios from "axios";
-import React, { useState, useEffect, useRef } from "react";
-import TopBar from "./components/TopBar";
+import React, { useState, useEffect, useRef, useContext } from "react";
 import "./DiaryEditor.css";
+import spotifyPlayerService from './services/SpotifyPlayerService';
+import { SpotifyPlayerContext } from "./App";
 
 function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, onCancel }) {
+  const { isSpotifyLoggedIn } = useContext(SpotifyPlayerContext);
   const [content, setContent] = useState(initialContent);
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
@@ -142,14 +144,16 @@ function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, o
   };
 
   const handleSave = async () => {
+    if (loading) return;
     setLoading(true);
     setError(null);
     setRecommendedTracks([]);
     setPlaylistTitle('');
 
     try {
-      // 1. 일기 저장하고 생성된 diaryId 받기
+      // 1. 일기 저장 또는 업데이트
       const diaryResponse = await axios.post('/api/diary', {
+        id: diary ? diary.id : null, // 기존 일기 ID 전달
         content: content,
         date: selectedDate
       }, { withCredentials: true });
@@ -158,29 +162,34 @@ function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, o
       if (!savedDiary || !savedDiary.id) {
         throw new Error("일기 저장 후 ID를 받아오지 못했습니다.");
       }
-      const diaryId = savedDiary.id;
-
-      // 2. 음악 추천 요청
-      const recommendResponse = await axios.post('/api/groq/recommend-music', 
-        { prompt: content, date: selectedDate },
-        { withCredentials: true }
-      );
       
-      const tracks = recommendResponse.data.tracks || [];
-      setRecommendedTracks(tracks);
-      
-      const formattedDate = selectedDate || new Date().toISOString().split('T')[0];
-      const newPlaylistTitle = `${formattedDate}의 플레이리스트`;
-      setPlaylistTitle(newPlaylistTitle);
+      alert("일기가 저장되었습니다!");
 
-      // 3. 플레이리스트 생성 요청
-      if (tracks.length > 0) {
-        await axios.post('/api/playlists', {
-          title: newPlaylistTitle,
-          diaryId: diaryId,
-          date: formattedDate,
-          musics: tracks.map(track => ({ musicUrl: track.spotifyUrl }))
-        }, { withCredentials: true });
+      // Spotify에 로그인되어 있을 때만 음악 추천 실행
+      if (isSpotifyLoggedIn) {
+        setLoading(true);
+        try {
+          const recommendResponse = await axios.post('/api/groq/recommend-music', 
+            { prompt: content, date: selectedDate },
+            { withCredentials: true }
+          );
+          
+          const tracks = recommendResponse.data.tracks || [];
+          setRecommendedTracks(tracks);
+          
+          const formattedDate = selectedDate || new Date().toISOString().split('T')[0];
+          const newPlaylistTitle = `${formattedDate}의 플레이리스트`;
+          setPlaylistTitle(newPlaylistTitle);
+
+        } catch (musicError) {
+          console.error("음악 추천 실패:", musicError);
+          alert("음악 추천 중 오류가 발생했습니다.");
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        // 로그아웃 상태에서는 바로 로딩 종료
+        setLoading(false);
       }
 
     } catch (e) {
@@ -208,9 +217,28 @@ function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, o
     }
   };
 
+  const handleAddToQueue = async () => {
+    if (recommendedTracks.length === 0) {
+      alert("추천된 곡이 없습니다.");
+      return;
+    }
+
+    const trackUris = recommendedTracks.map(track => `spotify:track:${track.trackId}`);
+    const result = await spotifyPlayerService.addTracksToQueue(trackUris);
+
+    if (result.success) {
+      if (result.playedImmediately) {
+        alert("추천 곡 재생을 시작합니다!");
+      } else {
+        alert("추천 곡들이 재생목록의 끝에 추가되었습니다!");
+      }
+    } else {
+      alert("재생목록 추가에 실패했습니다. Spotify Premium 계정이 활성화되어 있는지 확인해주세요.");
+    }
+  };
+
   return (
     <div>
-      <TopBar />
       <div className="diary-editor-container">
         <div className="diary-main-paper page-content" style={{ position: "relative" }}>
           {/* 상단 바: 날짜, 감정, 저장버튼, 드롭다운 */}
@@ -308,10 +336,8 @@ function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, o
                     <div className="playlist-header" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px'}}>
                         <div className="header-title" style={{fontWeight: 'bold', fontSize: '1.2rem'}}>{playlistTitle}</div>
                         <div className="spotify-link">
-                            <a 
-                              href="https://open.spotify.com" 
-                              target="_blank" 
-                              rel="noopener noreferrer" 
+                            <button
+                              onClick={handleAddToQueue}
                               style={{
                                 backgroundColor: '#1DB954',
                                 color: 'white',
@@ -321,12 +347,14 @@ function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, o
                                 display: 'flex',
                                 alignItems: 'center',
                                 fontWeight: 'bold',
-                                fontSize: '0.9rem'
+                                fontSize: '0.9rem',
+                                border: 'none',
+                                cursor: 'pointer'
                               }}
                             >
-                                Spotify에서 듣기
+                                추천 곡 모두 담기
                                 <img src="/spotify-logo.svg" alt="Spotify" style={{width: '40px', marginLeft: '8px'}}/>
-                            </a>
+                            </button>
                         </div>
                     </div>
                     <div className="playlist-body">
