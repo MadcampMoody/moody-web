@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import "./MoodTracker.css";
 import MoodSelector from "./MoodSelector";
@@ -10,6 +10,8 @@ function MoodTracker() {
   const [showMoodSelector, setShowMoodSelector] = useState(false);
   const [moodRecords, setMoodRecords] = useState({});
   const navigate = useNavigate();
+  const plusButtonRef = useRef(null);
+  const calendarRef = useRef(null);
 
   useEffect(() => {
     // 백엔드에서 사용자 데이터 가져오기
@@ -81,7 +83,6 @@ function MoodTracker() {
       TIRED: "😴",
       SAD: "😢",
       WORRIED: "😟",
-      BORED: "😒",
       HAPPY: "😊",
       CALM: "😌",
       EXCITED: "😃",
@@ -99,7 +100,6 @@ function MoodTracker() {
       TIRED: "피곤해요",
       SAD: "슬퍼요",
       WORRIED: "걱정돼요",
-      BORED: "지루해요",
       HAPPY: "행복해요",
       CALM: "침착해요",
       EXCITED: "신나요",
@@ -117,7 +117,6 @@ function MoodTracker() {
       TIRED: "tired",
       SAD: "sad",
       WORRIED: "worried",
-      BORED: "bored",
       HAPPY: "happy",
       CALM: "calm",
       EXCITED: "excited",
@@ -135,7 +134,6 @@ function MoodTracker() {
       TIRED: "#808080",
       SAD: "#800080",
       WORRIED: "#FFA500",
-      BORED: "#008000",
       HAPPY: "#FFD700",
       CALM: "#4169E1",
       EXCITED: "#FF69B4",
@@ -181,13 +179,42 @@ function MoodTracker() {
   };
 
   const handleDateClick = (date) => {
-    const dateKey = date.toDateString();
-    // 감정이 등록된 날짜만 일기장으로 이동
-    if (moodRecords[dateKey]) {
-      // 예: React Router 사용 시
-      navigate(`/diary/${formatDateToYYYYMMDD(date)}`);
+    const mood = getMoodForDate(date);
+    
+    // mood가 있는 날짜를 클릭한 경우 diary 페이지로 이동
+    if (mood) {
+      const dateString = formatDateToYYYYMMDD(date);
+      navigate(`/diary/${dateString}`);
+      return;
+    }
+    
+    // mood가 없는 날짜의 경우 기존 로직 유지
+    if (selectedDate && date.toDateString() === selectedDate.toDateString()) {
+      setSelectedDate(null); // 선택 해제
+      
+      // 선택 해제 시 캘린더로 스크롤 이동
+      setTimeout(() => {
+        if (calendarRef.current) {
+          calendarRef.current.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+          });
+        }
+      }, 100);
     } else {
-      setSelectedDate(date); // 기존 선택 로직
+      setSelectedDate(date);
+      
+      // + 버튼이 나타날 조건이면 스크롤 이동
+      if (!isFutureDate(date)) {
+        setTimeout(() => {
+          if (plusButtonRef.current) {
+            plusButtonRef.current.scrollIntoView({
+              behavior: 'smooth',
+              block: 'center'
+            });
+          }
+        }, 100); // 버튼 애니메이션이 시작된 후 스크롤
+      }
     }
   };
 
@@ -206,7 +233,6 @@ function MoodTracker() {
         tired: "TIRED",
         sad: "SAD",
         worried: "WORRIED",
-        bored: "BORED",
         happy: "HAPPY",
         calm: "CALM",
         excited: "EXCITED",
@@ -296,16 +322,13 @@ function MoodTracker() {
 
   return (
     <div className="mood-tracker-container">
-      <div className="mood-tracker-header">
+      {/* <div className="mood-tracker-header">
         <div className="header-content">
           <div className="user-welcome">
             <h1>안녕하세요, {userData?.name || '사용자'}님!</h1>
             <p>오늘 하루는 어떠셨나요?</p>
           </div>
           <div className="header-actions">
-            <button className="today-btn" onClick={() => navigate('/music_recommend')}>
-              음악 추천
-            </button>
             <button className="today-btn" onClick={goToToday}>
               오늘
             </button>
@@ -314,9 +337,9 @@ function MoodTracker() {
             </button>
           </div>
         </div>
-      </div>
+      </div> */}
 
-      <div className="calendar-container">
+      <div className="calendar-container" ref={calendarRef}>
         <div className="calendar-header">
           <button className="nav-btn" onClick={goToPreviousMonth}>
             ‹
@@ -368,33 +391,22 @@ function MoodTracker() {
         </div>
       </div>
 
-      {selectedDate && (
-        <div className="selected-date-info">
-          <h3>
-            {selectedDate.getFullYear()}년 {selectedDate.getMonth() + 1}월 {selectedDate.getDate()}일
-          </h3>
-          <button
-            className="add-mood-btn"
-            onClick={handleAddMoodClick}
-            disabled={isFutureDate(selectedDate)} // 미래면 비활성화
-            style={isFutureDate(selectedDate) ? { opacity: 0.5, cursor: "not-allowed" } : {}}
-          >
-            <span className="plus-icon">+</span>
-            <span className="btn-text">감정 기록하기</span>
-          </button>
-          {isFutureDate(selectedDate) && (
-            <div style={{ color: "red", marginTop: "8px", fontSize: "13px" }}>
-              미래 날짜에는 감정을 기록할 수 없습니다.
-            </div>
-          )}
-        </div>
-      )}
+      {/* +감정 기록하기 버튼을 캘린더 아래에 가운데 정렬로 크게 표시 */}
+      <div className="plus-btn-container" ref={plusButtonRef}>
+        <button
+          className={`big-plus-btn ${selectedDate && !isFutureDate(selectedDate) ? 'visible' : 'hidden'}`}
+          onClick={handleAddMoodClick}
+        >
+          +
+        </button>
+      </div>
 
       {showMoodSelector && (
         <MoodSelector
           selectedDate={selectedDate}
           onClose={() => setShowMoodSelector(false)}
           onMoodSelect={handleMoodSelect}
+          plusButtonRef={plusButtonRef}
         />
       )}
     </div>

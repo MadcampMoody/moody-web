@@ -5,6 +5,7 @@ import "./DiaryEditor.css";
 function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, onCancel }) {
   const [content, setContent] = useState(initialContent);
   const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef(null);
 
   // 음악 추천 관련 state
   const [recommendedTracks, setRecommendedTracks] = useState([]);
@@ -14,6 +15,20 @@ function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, o
   const [error, setError] = useState(null);
   const [userName, setUserName] = useState('사용자');
   const playlistRef = useRef(null);
+
+  // 외부 클릭 시 dropdown 닫기
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   // 사용자 정보 가져오기 및 기존 플레이리스트 조회 (병렬 처리)
   useEffect(() => {
@@ -159,12 +174,35 @@ function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, o
         </div>
         {/* 드롭다운 (오른쪽) */}
         {diary && content && (
-          <div style={{ position: "absolute", top: 20, right: 20 }}>
-            <button onClick={() => setShowDropdown(v => !v)}>⋮</button>
+          <div className="diary-dropdown-container" ref={dropdownRef}>
+            <button 
+              className="diary-dropdown-trigger"
+              onClick={() => setShowDropdown(v => !v)}
+            >
+              <span className="dropdown-dots">⋮</span>
+            </button>
             {showDropdown && (
-              <div style={{ position: "absolute", right: 0, background: "#fff", border: "1px solid #ccc" }}>
-                <div onClick={() => {/* 수정 모드 진입 */}}>수정</div>
-                <div onClick={handleDelete}>삭제</div>
+              <div className="diary-dropdown-menu">
+                <div 
+                  className="diary-dropdown-item"
+                  onClick={() => {
+                    setShowDropdown(false);
+                    /* 수정 모드 진입 */
+                  }}
+                >
+                  <span className="dropdown-icon">✏️</span>
+                  수정
+                </div>
+                <div 
+                  className="diary-dropdown-item diary-dropdown-delete"
+                  onClick={() => {
+                    setShowDropdown(false);
+                    handleDelete();
+                  }}
+                >
+                  <span className="dropdown-icon">🗑️</span>
+                  삭제
+                </div>
               </div>
             )}
           </div>
