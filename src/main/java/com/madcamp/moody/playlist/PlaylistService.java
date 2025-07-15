@@ -3,6 +3,8 @@ package com.madcamp.moody.playlist;
 import com.madcamp.moody.music.MusicRepository;
 import com.madcamp.moody.music.MusicService;
 import com.madcamp.moody.music.MusicDTO;
+import com.madcamp.moody.user.User;
+import com.madcamp.moody.user.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,12 +20,14 @@ public class PlaylistService {
     private final PlaylistRepository playlistRepository;
     private final MusicRepository musicRepository;
     private final MusicService musicService;
+    private final UserRepository userRepository;
 
     @Autowired
-    public PlaylistService(PlaylistRepository playlistRepository, MusicRepository musicRepository, MusicService musicService) {
+    public PlaylistService(PlaylistRepository playlistRepository, MusicRepository musicRepository, MusicService musicService, UserRepository userRepository) {
         this.playlistRepository = playlistRepository;
         this.musicRepository = musicRepository;
         this.musicService = musicService;
+        this.userRepository = userRepository;
     }
 
     // 모든 playlist 조회
