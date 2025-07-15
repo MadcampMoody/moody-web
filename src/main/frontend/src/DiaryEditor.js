@@ -17,6 +17,7 @@ function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, o
   const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState(null);
   const [userName, setUserName] = useState('사용자');
+  const [likedTrackIds, setLikedTrackIds] = useState(new Set());
   const playlistRef = useRef(null);
 
   // 배경 스타일 동적 적용
@@ -165,30 +166,25 @@ function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, o
       
       alert("일기가 저장되었습니다!");
 
-      // Spotify에 로그인되어 있을 때만 음악 추천 실행
-      if (isSpotifyLoggedIn) {
-        setLoading(true);
-        try {
-          const recommendResponse = await axios.post('/api/groq/recommend-music', 
-            { prompt: content, date: selectedDate },
-            { withCredentials: true }
-          );
-          
-          const tracks = recommendResponse.data.tracks || [];
-          setRecommendedTracks(tracks);
-          
-          const formattedDate = selectedDate || new Date().toISOString().split('T')[0];
-          const newPlaylistTitle = `${formattedDate}의 플레이리스트`;
-          setPlaylistTitle(newPlaylistTitle);
+      // 음악 추천은 항상 실행
+      setLoading(true);
+      try {
+        const recommendResponse = await axios.post('/api/groq/recommend-music', 
+          { prompt: content, date: selectedDate },
+          { withCredentials: true }
+        );
+        
+        const tracks = recommendResponse.data.tracks || [];
+        setRecommendedTracks(tracks);
+        
+        const formattedDate = selectedDate || new Date().toISOString().split('T')[0];
+        const newPlaylistTitle = `${formattedDate}의 플레이리스트`;
+        setPlaylistTitle(newPlaylistTitle);
 
-        } catch (musicError) {
-          console.error("음악 추천 실패:", musicError);
-          alert("음악 추천 중 오류가 발생했습니다.");
-        } finally {
-          setLoading(false);
-        }
-      } else {
-        // 로그아웃 상태에서는 바로 로딩 종료
+      } catch (musicError) {
+        console.error("음악 추천 실패:", musicError);
+        alert("음악 추천 중 오류가 발생했습니다.");
+      } finally {
         setLoading(false);
       }
 
@@ -234,6 +230,51 @@ function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, o
       }
     } else {
       alert("재생목록 추가에 실패했습니다. Spotify Premium 계정이 활성화되어 있는지 확인해주세요.");
+    }
+  };
+
+  useEffect(() => {
+    const fetchLikedSongs = async () => {
+      try {
+        const response = await axios.get('/api/liked-songs/ids', { withCredentials: true });
+        setLikedTrackIds(new Set(response.data));
+      } catch (error) {
+        console.error("좋아요 목록 조회 실패:", error);
+      }
+    };
+    fetchLikedSongs();
+  }, []);
+
+  const handleToggleLike = async (track) => {
+    const isLiked = likedTrackIds.has(track.trackId);
+    const apiEndpoint = isLiked ? '/remove' : '/add';
+    
+    // 1. 낙관적 UI 업데이트: 즉시 상태를 변경
+    const originalLikedIds = new Set(likedTrackIds);
+    const newLikedTrackIds = new Set(likedTrackIds);
+    if (isLiked) {
+      newLikedTrackIds.delete(track.trackId);
+    } else {
+      newLikedTrackIds.add(track.trackId);
+    }
+    setLikedTrackIds(newLikedTrackIds);
+
+    try {
+      // 2. 백그라운드에서 서버에 요청
+      await axios.post(`/api/liked-songs${apiEndpoint}`, {
+        trackId: track.trackId,
+        musicUrl: track.spotifyUrl,
+        title: track.title,
+        artist: track.artist
+      }, { withCredentials: true });
+      // 3. 성공 시 아무것도 하지 않음
+
+    } catch (error) {
+      console.error(`좋아요 ${isLiked ? '취소' : '추가'} 실패:`, error);
+      alert("요청 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+      
+      // 4. 실패 시 UI를 원래 상태로 되돌림
+      setLikedTrackIds(originalLikedIds);
     }
   };
 
@@ -335,35 +376,37 @@ function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, o
                 }}>
                     <div className="playlist-header" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px'}}>
                         <div className="header-title" style={{fontWeight: 'bold', fontSize: '1.2rem'}}>{playlistTitle}</div>
-                        <div className="spotify-link">
-                            <button
-                              onClick={handleAddToQueue}
-                              style={{
-                                backgroundColor: '#1DB954',
-                                color: 'white',
-                                padding: '8px 16px',
-                                borderRadius: '50px',
-                                textDecoration: 'none',
-                                display: 'flex',
-                                alignItems: 'center',
-                                fontWeight: 'bold',
-                                fontSize: '0.9rem',
-                                border: 'none',
-                                cursor: 'pointer'
-                              }}
-                            >
-                                추천 곡 모두 담기
-                                <img src="/spotify-logo.svg" alt="Spotify" style={{width: '40px', marginLeft: '8px'}}/>
-                            </button>
-                        </div>
+                        {isSpotifyLoggedIn && (
+                          <div className="spotify-link">
+                              <button
+                                onClick={handleAddToQueue}
+                                style={{
+                                  backgroundColor: '#1DB954',
+                                  color: 'white',
+                                  padding: '8px 16px',
+                                  borderRadius: '50px',
+                                  textDecoration: 'none',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  fontWeight: 'bold',
+                                  fontSize: '0.9rem',
+                                  border: 'none',
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                  추천 곡 모두 담기
+                                  <img src="/spotify-logo.svg" alt="Spotify" style={{width: '40px', marginLeft: '8px'}}/>
+                              </button>
+                          </div>
+                        )}
                     </div>
                     <div className="playlist-body">
                         {recommendedTracks.map((track, index) => (
-                            <div key={track.trackId || index} className="playlist-track" style={{display: 'flex', alignItems: 'center', marginBottom: '10px'}}>
-                                <span style={{marginRight: '15px', fontWeight: 'bold', fontSize: '1.1rem', minWidth: '20px', textAlign: 'center'}}>{index + 1}</span>
-                                <div style={{width: '100%'}}>
+                            <div key={track.trackId || index} className="playlist-track" style={{display: 'flex', alignItems: 'center', marginBottom: '10px', gap: '10px'}}>
+                                <span style={{fontWeight: 'bold', fontSize: '1.1rem', minWidth: '20px', textAlign: 'center'}}>{index + 1}</span>
+                                <div style={{flexGrow: 1}}>
                                   <iframe
-                                      src={`https://open.spotify.com/embed/track/${track.trackId}?utm_source=generator&theme=0`}
+                                      src={`https://open.spotify.com/embed/track/${track.trackId}?utm_source=generator&theme=0&controls=0`}
                                       width="100%"
                                       height="80"
                                       frameBorder="0"
@@ -373,6 +416,15 @@ function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, o
                                       title={`${track.title} by ${track.artist}`}
                                   ></iframe>
                                 </div>
+                                <button 
+                                  onClick={() => handleToggleLike(track)} 
+                                  className={`like-button ${likedTrackIds.has(track.trackId) ? 'liked' : ''}`}
+                                  title={likedTrackIds.has(track.trackId) ? '좋아요 취소' : '좋아요'}
+                                >
+                                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                                  </svg>
+                                </button>
                             </div>
                         ))}
                     </div>
