@@ -1,14 +1,16 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Onboarding.css";
+import axios from 'axios'; // axios import
 
 function Onboarding() {
   const [step, setStep] = useState(1);
   const [userData, setUserData] = useState({
-    nickname: "",
-    musicRegion: [],
-    musicPreferences: []
+    name: "", // nickname -> name
+    musicRegion: "", // 배열 -> 단일 값
+    musicGenres: [] // musicPreferences -> musicGenres
   });
+  const [error, setError] = useState(""); // 에러 상태 추가
   const navigate = useNavigate();
 
   const musicGenres = [
@@ -18,62 +20,53 @@ function Onboarding() {
 
   const handleNicknameSubmit = (e) => {
     e.preventDefault();
-    if (userData.nickname.trim()) {
+    if (userData.name.trim()) {
       setStep(2);
     }
   };
 
-  // musicRegion을 배열로 관리, toggle 방식
-  const handleMusicRegionToggle = (region) => {
-    setUserData(prev => {
-      let newRegions = prev.musicRegion.includes(region)
-        ? prev.musicRegion.filter(r => r !== region)
-        : [...prev.musicRegion, region];
-      return { ...prev, musicRegion: newRegions };
-    });
+  // musicRegion을 단일 값으로 관리
+  const handleMusicRegionSelect = (region) => {
+    setUserData(prev => ({ ...prev, musicRegion: region }));
   };
 
   const handleMusicRegionNext = () => {
-    setStep(3);
+    if (userData.musicRegion) {
+        setStep(3);
+    }
   };
 
   const handleMusicPreferenceToggle = (genre) => {
     setUserData(prev => ({
       ...prev,
-      musicPreferences: prev.musicPreferences.includes(genre)
-        ? prev.musicPreferences.filter(g => g !== genre)
-        : [...prev.musicPreferences, genre]
+      musicGenres: prev.musicGenres.includes(genre)
+        ? prev.musicGenres.filter(g => g !== genre)
+        : [...prev.musicGenres, genre]
     }));
   };
 
   const handleComplete = async () => {
-    console.log('handleComplete 호출됨');
+    setError(""); // 에러 초기화
     try {
-      console.log('백엔드로 데이터 전송 시작:', userData);
-      // 백엔드로 온보딩 데이터 전송
-      const response = await fetch('/api/auth/onboarding-complete', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(userData)
+      // musicRegion 값을 Domestic -> DOMESTIC, International -> INTERNATIONAL로 변환
+      const regionToSend = userData.musicRegion === 'domestic' ? 'DOMESTIC' : 'INTERNATIONAL';
+
+      const dataToSend = {
+        name: userData.name,
+        musicRegion: regionToSend,
+        musicGenres: userData.musicGenres
+      };
+      
+      await axios.post('/api/auth/onboarding', dataToSend, {
+        headers: { 'Content-Type': 'application/json' },
+        withCredentials: true,
       });
 
-      console.log('백엔드 응답:', response.status);
-      if (response.ok) {
-        console.log('온보딩 완료 성공, dashboard로 이동');
-        // Dashboard로 이동
-        navigate('/dashboard');
-      } else {
-        console.error('온보딩 완료 실패');
-        // 에러가 있어도 dashboard로 이동
-        navigate('/dashboard');
-      }
-    } catch (error) {
-      console.error('온보딩 완료 중 오류:', error);
-      // 에러가 있어도 dashboard로 이동
       navigate('/dashboard');
+
+    } catch (err) {
+      setError("온보딩 정보를 저장하는 데 실패했습니다. 다시 시도해주세요.");
+      console.error('온보딩 완료 중 오류:', err);
     }
   };
 
@@ -98,13 +91,13 @@ function Onboarding() {
               <input
                 type="text"
                 placeholder="닉네임을 입력하세요"
-                value={userData.nickname}
-                onChange={(e) => setUserData(prev => ({ ...prev, nickname: e.target.value }))}
+                value={userData.name}
+                onChange={(e) => setUserData(prev => ({ ...prev, name: e.target.value }))}
                 className="nickname-input"
                 maxLength={20}
                 required
               />
-              <button type="submit" className="next-btn" disabled={!userData.nickname.trim()}>
+              <button type="submit" className="next-btn" disabled={!userData.name.trim()}>
                 다음
               </button>
             </form>
@@ -115,12 +108,11 @@ function Onboarding() {
           <div className="onboarding-step">
             <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'}}>
               <h2 style={{margin: 0}}>어떤 음악을 선호하시나요?</h2>
-              <span className="multi-select-hint">(복수 선택 가능)</span>
             </div>
             <div className="music-region-selection">
               <button
-                className={`region-btn ${userData.musicRegion.includes('domestic') ? 'selected' : ''}`}
-                onClick={() => handleMusicRegionToggle('domestic')}
+                className={`region-btn ${userData.musicRegion === 'domestic' ? 'selected' : ''}`}
+                onClick={() => handleMusicRegionSelect('domestic')}
                 type="button"
               >
                 <div className="region-icon">🇰🇷</div>
@@ -130,8 +122,8 @@ function Onboarding() {
                 </div>
               </button>
               <button
-                className={`region-btn ${userData.musicRegion.includes('international') ? 'selected' : ''}`}
-                onClick={() => handleMusicRegionToggle('international')}
+                className={`region-btn ${userData.musicRegion === 'international' ? 'selected' : ''}`}
+                onClick={() => handleMusicRegionSelect('international')}
                 type="button"
               >
                 <div className="region-icon">🌍</div>
@@ -151,7 +143,7 @@ function Onboarding() {
               <button 
                 className="next-btn" 
                 onClick={handleMusicRegionNext}
-                disabled={userData.musicRegion.length === 0}
+                disabled={!userData.musicRegion}
               >
                 다음
               </button>
@@ -169,13 +161,14 @@ function Onboarding() {
               {musicGenres.map((genre) => (
                 <button
                   key={genre}
-                  className={`genre-btn ${userData.musicPreferences.includes(genre) ? 'selected' : ''}`}
+                  className={`genre-btn ${userData.musicGenres.includes(genre) ? 'selected' : ''}`}
                   onClick={() => handleMusicPreferenceToggle(genre)}
                 >
                   {genre}
                 </button>
               ))}
             </div>
+            {error && <p className="onboarding-error">{error}</p>}
             <div className="onboarding-actions">
               <button 
                 className="back-btn" 
@@ -186,7 +179,7 @@ function Onboarding() {
               <button 
                 className="complete-btn" 
                 onClick={handleComplete}
-                disabled={userData.musicPreferences.length === 0}
+                disabled={userData.musicGenres.length === 0}
               >
                 완료
               </button>
