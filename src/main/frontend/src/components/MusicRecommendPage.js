@@ -1,9 +1,13 @@
 import React from 'react';
+import TopBar from './TopBar';
 
 const MusicRecommendPage = () => {
     return (
         <div>
-            {/* 이 페이지는 현재 사용되지 않습니다. */}
+            <TopBar />
+            <div className="page-content">
+                {/* 이 페이지는 현재 사용되지 않습니다. */}
+            </div>
         </div>
     );
 };
