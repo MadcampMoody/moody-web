@@ -1,5 +1,6 @@
 import axios from "axios";
 import React, { useState, useEffect, useRef } from "react";
+import TopBar from "./components/TopBar";
 import "./DiaryEditor.css";
 
 function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, onCancel }) {
@@ -143,9 +144,11 @@ function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, o
   };
 
   return (
-    <div className="diary-main-paper" style={{ position: "relative" }}>
-      {/* 상단 바: 날짜, 감정, 드롭다운 */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative" }}>
+    <div>
+      <TopBar />
+      <div className="diary-main-paper page-content" style={{ position: "relative" }}>
+        {/* 상단 바: 날짜, 감정, 드롭다운 */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative" }}>
         {/* 날짜 (왼쪽) */}
         <div className="diary-date">{formatShortDate(selectedDate)}</div>
         {/* 감정 (가운데) */}
@@ -244,6 +247,7 @@ function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, o
                 </div>
             </div>
         )}
+      </div>
     </div>
   );
 }

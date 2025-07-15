@@ -4,6 +4,8 @@ body, html {
   background: #fff8f1; /* 종이색으로 통일 */
 }
 
+
+
 .diary-editor-container {
   display: flex;
   align-items: center;

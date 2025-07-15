@@ -145,3 +145,11 @@ a:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
+
+/* 전역 레이아웃: TopBar가 있는 페이지의 컨텐츠 영역 */
+.page-content {
+  /* TopBar의 높이(80px) + box-shadow + 여유 공간을 고려한 상단 여백 */
+  padding-top: 100px;
+  min-height: calc(100vh - 80px); /* 전체 화면에서 TopBar 높이를 뺀 만큼 */
+  box-sizing: border-box;
+}
