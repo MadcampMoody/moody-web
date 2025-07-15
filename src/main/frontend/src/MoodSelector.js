@@ -3,23 +3,25 @@ import "./MoodSelector.css";
 
 function MoodSelector({ selectedDate, onClose, onMoodSelect, plusButtonRef }) {
   const [selectedMood, setSelectedMood] = useState(null);
-  const [rotation, setRotation] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const [lastRotation, setLastRotation] = useState(0);
+  const [currentSet, setCurrentSet] = useState(0); // 0 또는 1
   const [plusButtonRect, setPlusButtonRect] = useState(null);
 
-  const moods = [
+  // 긍정적인 감정들 (먼저 보여짐)
+  const positiveMoods = [
+    { id: 'happy', name: '행복해요', color: '#FFD700', emoji: '😊' },
+    { id: 'excited', name: '신나요', color: '#FF69B4', emoji: '😃' },
+    { id: 'calm', name: '침착해요', color: '#4169E1', emoji: '😌' },
+    { id: 'proud', name: '자랑스러워요', color: '#4B0082', emoji: '😎' },
+    { id: 'grateful', name: '감사해요', color: '#00FF00', emoji: '🙏' }
+  ];
+
+  // 부정적인 감정들 (변경 버튼으로 전환)
+  const negativeMoods = [
     { id: 'angry', name: '짜증나요', color: '#FF5A5A', emoji: '😤' },
     { id: 'mad', name: '화나요', color: '#FF0000', emoji: '😡' },
-    { id: 'tired', name: '피곤해요', color: '#808080', emoji: '😴' },
     { id: 'sad', name: '슬퍼요', color: '#800080', emoji: '😢' },
-    { id: 'worried', name: '걱정돼요', color: '#FFA500', emoji: '😟' },
-    { id: 'happy', name: '행복해요', color: '#FFD700', emoji: '😊' },
-    { id: 'calm', name: '침착해요', color: '#4169E1', emoji: '😌' },
-    { id: 'excited', name: '신나요', color: '#FF69B4', emoji: '😃' },
-    { id: 'proud', name: '자랑스러워요', color: '#4B0082', emoji: '😎' },
-    { id: 'grateful', name: '감사해요', color: '#00FF00', emoji: '😊' }
+    { id: 'tired', name: '피곤해요', color: '#808080', emoji: '😴' },
+    { id: 'worried', name: '걱정돼요', color: '#FFA500', emoji: '😟' }
   ];
 
   // + 버튼 위치 계산
@@ -56,6 +58,10 @@ function MoodSelector({ selectedDate, onClose, onMoodSelect, plusButtonRef }) {
     onClose();
   };
 
+  const handleSetChange = () => {
+    setCurrentSet(prev => (prev + 1) % 2); // 0과 1 사이에서 토글
+  };
+
   const isFutureDate = (date) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -64,81 +70,18 @@ function MoodSelector({ selectedDate, onClose, onMoodSelect, plusButtonRef }) {
     return compareDate > today;
   };
 
-  // 마우스 드래그 시작
-  const handleMouseDown = (e) => {
-    e.preventDefault();
-    setIsDragging(true);
-    setDragStart({ x: e.clientX, y: e.clientY });
-    setLastRotation(rotation);
-  };
-
-  // 마우스 드래그 중
-  const handleMouseMove = (e) => {
-    if (!isDragging) return;
-    
-    const deltaX = e.clientX - dragStart.x;
-    const newRotation = lastRotation + (deltaX * 0.2); // 감도를 0.5에서 0.2로 낮춤
-    setRotation(newRotation);
-  };
-
-  // 마우스 드래그 종료
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
-
-  // 터치 이벤트 (모바일 지원)
-  const handleTouchStart = (e) => {
-    e.preventDefault();
-    const touch = e.touches[0];
-    setIsDragging(true);
-    setDragStart({ x: touch.clientX, y: touch.clientY });
-    setLastRotation(rotation);
-  };
-
-  const handleTouchMove = (e) => {
-    if (!isDragging) return;
-    
-    const touch = e.touches[0];
-    const deltaX = touch.clientX - dragStart.x;
-    const newRotation = lastRotation + (deltaX * 0.2); // 감도를 0.5에서 0.2로 낮춤
-    setRotation(newRotation);
-  };
-
-  const handleTouchEnd = () => {
-    setIsDragging(false);
-  };
-
-  // 이벤트 리스너 등록
-  useEffect(() => {
-    if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-      document.addEventListener('touchmove', handleTouchMove);
-      document.addEventListener('touchend', handleTouchEnd);
-      
-      return () => {
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
-        document.removeEventListener('touchmove', handleTouchMove);
-        document.removeEventListener('touchend', handleTouchEnd);
-      };
-    }
-  }, [isDragging, dragStart, lastRotation]);
-
-  // 현재 보이는 5개 감정 계산 (세트 단위로 변경)
+  // 현재 보이는 5개 감정 계산 (긍정/부정 감정 세트로 변경)
   const getVisibleMoods = () => {
     const visibleMoods = [];
-    // 드래그 임계값을 기준으로 세트 결정 (100px 드래그마다 세트 변경)
-    const setIndex = Math.floor(Math.abs(rotation) / 100) % 2;
-    const startIndex = setIndex * 5; // 0-4 또는 5-9
+    // currentSet 0: 긍정적인 감정, currentSet 1: 부정적인 감정
+    const currentMoods = currentSet === 0 ? positiveMoods : negativeMoods;
     
     for (let i = 0; i < 5; i++) {
-      const moodIndex = startIndex + i;
       // 반바퀴(180도)에 5개 배치: 각각 45도씩 간격, -90도부터 +90도까지
       const angle = -90 + (i * 45);
       
       visibleMoods.push({
-        mood: moods[moodIndex],
+        mood: currentMoods[i],
         angle: angle,
         index: i
       });
@@ -163,9 +106,16 @@ function MoodSelector({ selectedDate, onClose, onMoodSelect, plusButtonRef }) {
           top: plusButtonRect.top + plusButtonRect.height / 2,
           left: plusButtonRect.left + plusButtonRect.width / 2,
         }}
-        onMouseDown={handleMouseDown}
-        onTouchStart={handleTouchStart}
       >
+        {/* 중앙의 변경 버튼 */}
+        <div 
+          className="change-btn" 
+          onClick={handleSetChange}
+          title="다른 감정 보기"
+        >
+          ⟲
+        </div>
+
         {/* 원형으로 배치된 감정들 */}
         {visibleMoods.map(({ mood, angle, index }) => (
           <div
@@ -181,9 +131,9 @@ function MoodSelector({ selectedDate, onClose, onMoodSelect, plusButtonRef }) {
           </div>
         ))}
 
-        {/* 드래그 힌트 */}
-        <div className="inline-drag-hint">
-          드래그해서 회전
+        {/* 변경 힌트 */}
+        <div className="inline-change-hint">
+          {currentSet === 0 ? '긍정적인 감정들 → 부정적인 감정 보기' : '부정적인 감정들 → 긍정적인 감정 보기'}
         </div>
       </div>
     </>

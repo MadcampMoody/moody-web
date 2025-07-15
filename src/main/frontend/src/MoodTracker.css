@@ -1,7 +1,7 @@
 .mood-tracker-container {
   height: 100vh;
   background: #ffffff; /* 흰색 배경으로 변경 */
-  padding: 20px;
+  padding: 5px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   display: flex;
   flex-direction: column;
@@ -15,7 +15,7 @@
   color: white; /* 내부 기본 글자색 흰색으로 변경 */
   border-radius: 20px;
   padding: 15px 20px;
-  margin-bottom: 15px;
+  margin-bottom: 1px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
   flex-shrink: 0;
 }
@@ -195,7 +195,7 @@
   position: relative;
   background: #6a6a6a; /* 어두운 배경 */
   color: white;
-  min-height: 50px;
+  min-height: 80px;
   height: 100%;
 }
 
@@ -224,27 +224,48 @@
   transform: scale(1.1);
 }
 
+.calendar-day.has-mood {
+  background: #FC9CB7; /* 연한 핑크색 */
+  color: white;
+  border-color: #FC9CB7;
+}
+
+.calendar-day.has-mood:hover {
+  background: #FCAEC6; /* 호버 시 약간 더 진한 핑크 */
+  border-color: #FCAEC6;
+}
+
+.calendar-day.today.has-mood {
+  background: #FC9CB7; /* 오늘이면서 감정이 있는 경우 연한 핑크색 우선 */
+  color: white;
+  border-color: #FC9CB7;
+}
+
+.calendar-day.selected.has-mood {
+  background: #ff6b6b; /* 선택된 날짜는 빨간색 우선 */
+  color: white;
+  border-color: #ff6b6b;
+}
+
 .day-number {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
-  margin-bottom: 5px;
+  margin-bottom: 2px;
 }
 
 .mood-indicator {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin-top: 2px;
 }
 
-.calendar-day.today .mood-indicator {
-  background: #505050; /* 어두운 색 */
+.mood-emoji-large {
+  font-size: 45px;
+  line-height: 1;
 }
 
-.calendar-day.selected .mood-indicator {
-  background: white;
-}
+/* mood-indicator에서 background 스타일 제거됨 - 이모지만 표시 */
 
 /*
 .selected-date-info {
@@ -362,12 +383,12 @@
 /* 반응형 디자인 */
 @media (max-width: 768px) {
   .mood-tracker-container {
-    padding: 10px;
+    padding: 3px;
   }
   
   .mood-tracker-header {
     padding: 15px;
-    margin-bottom: 10px;
+    margin-bottom: 2px;
   }
   
   .calendar-container {

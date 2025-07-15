@@ -371,18 +371,12 @@ function MoodTracker() {
                     !isCurrentMonth(date) ? 'other-month' : ''
                   } ${isToday(date) ? 'today' : ''} ${
                     isSelected(date) ? 'selected' : ''
-                  }`}
+                  } ${mood ? 'has-mood' : ''}`}
                   onClick={() => handleDateClick(date)}
                 >
                   <span className="day-number">{date.getDate()}</span>
-                  <div 
-                    className="mood-indicator"
-                    style={{
-                      backgroundColor: mood ? mood.color : 'transparent',
-                      border: mood ? `2px solid ${mood.color}` : 'none'
-                    }}
-                  >
-                    {mood && <span style={{ fontSize: '10px' }}>{mood.emoji}</span>}
+                  <div className="mood-indicator">
+                    {mood && <span className="mood-emoji-large">{mood.emoji}</span>}
                   </div>
                 </div>
               );
@@ -394,7 +388,7 @@ function MoodTracker() {
       {/* +감정 기록하기 버튼을 캘린더 아래에 가운데 정렬로 크게 표시 */}
       <div className="plus-btn-container" ref={plusButtonRef}>
         <button
-          className={`big-plus-btn ${selectedDate && !isFutureDate(selectedDate) ? 'visible' : 'hidden'}`}
+          className={`big-plus-btn ${selectedDate && !isFutureDate(selectedDate) && !showMoodSelector ? 'visible' : 'hidden'}`}
           onClick={handleAddMoodClick}
         >
           +
