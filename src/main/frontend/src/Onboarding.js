@@ -6,7 +6,7 @@ function Onboarding() {
   const [step, setStep] = useState(1);
   const [userData, setUserData] = useState({
     nickname: "",
-    musicRegion: "", // 국내/해외 선호도
+    musicRegion: [],
     musicPreferences: []
   });
   const navigate = useNavigate();
@@ -23,14 +23,18 @@ function Onboarding() {
     }
   };
 
-  const handleMusicRegionSelect = (region) => {
-    setUserData(prev => ({ ...prev, musicRegion: region }));
+  // musicRegion을 배열로 관리, toggle 방식
+  const handleMusicRegionToggle = (region) => {
+    setUserData(prev => {
+      let newRegions = prev.musicRegion.includes(region)
+        ? prev.musicRegion.filter(r => r !== region)
+        : [...prev.musicRegion, region];
+      return { ...prev, musicRegion: newRegions };
+    });
   };
 
   const handleMusicRegionNext = () => {
-    if (userData.musicRegion) {
-      setStep(3);
-    }
+    setStep(3);
   };
 
   const handleMusicPreferenceToggle = (genre) => {
@@ -77,12 +81,14 @@ function Onboarding() {
     <div className="onboarding-container">
       <div className="onboarding-card">
         <div className="onboarding-header">
-          <img 
-            src="/moody_logo.png" 
-            alt="Moody Logo" 
-            className="onboarding-logo"
-          />
-          <h1>Moody에 오신 것을 환영합니다</h1>
+          <div className="onboarding-logo-wrapper">
+            <img 
+              src="/moody_logo.png" 
+              alt="Moody Logo" 
+              className="onboarding-logo"
+            />
+          </div>
+          <div className="onboarding-title">moody</div>
         </div>
 
         {step === 1 && (
@@ -107,12 +113,15 @@ function Onboarding() {
 
         {step === 2 && (
           <div className="onboarding-step">
-            <h2>어떤 음악을 선호하시나요?</h2>
-            <p>주로 듣는 음악의 지역을 선택해주세요.</p>
+            <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'}}>
+              <h2 style={{margin: 0}}>어떤 음악을 선호하시나요?</h2>
+              <span className="multi-select-hint">(복수 선택 가능)</span>
+            </div>
             <div className="music-region-selection">
               <button
-                className={`region-btn ${userData.musicRegion === 'domestic' ? 'selected' : ''}`}
-                onClick={() => handleMusicRegionSelect('domestic')}
+                className={`region-btn ${userData.musicRegion.includes('domestic') ? 'selected' : ''}`}
+                onClick={() => handleMusicRegionToggle('domestic')}
+                type="button"
               >
                 <div className="region-icon">🇰🇷</div>
                 <div className="region-text">
@@ -121,23 +130,14 @@ function Onboarding() {
                 </div>
               </button>
               <button
-                className={`region-btn ${userData.musicRegion === 'international' ? 'selected' : ''}`}
-                onClick={() => handleMusicRegionSelect('international')}
+                className={`region-btn ${userData.musicRegion.includes('international') ? 'selected' : ''}`}
+                onClick={() => handleMusicRegionToggle('international')}
+                type="button"
               >
                 <div className="region-icon">🌍</div>
                 <div className="region-text">
                   <h3>해외음악</h3>
                   <p>해외 가수, 글로벌 음악</p>
-                </div>
-              </button>
-              <button
-                className={`region-btn ${userData.musicRegion === 'both' ? 'selected' : ''}`}
-                onClick={() => handleMusicRegionSelect('both')}
-              >
-                <div className="region-icon">🎵</div>
-                <div className="region-text">
-                  <h3>둘 다</h3>
-                  <p>국내음악과 해외음악 모두</p>
                 </div>
               </button>
             </div>
@@ -151,7 +151,7 @@ function Onboarding() {
               <button 
                 className="next-btn" 
                 onClick={handleMusicRegionNext}
-                disabled={!userData.musicRegion}
+                disabled={userData.musicRegion.length === 0}
               >
                 다음
               </button>
@@ -161,8 +161,10 @@ function Onboarding() {
 
         {step === 3 && (
           <div className="onboarding-step">
-            <h2>음악 취향을 알려주세요</h2>
-            <p>좋아하는 음악 장르를 선택해주세요. (복수 선택 가능)</p>
+            <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'}}>
+              <h2 style={{margin: 0}}>음악 취향을 알려주세요</h2>
+              <span className="multi-select-hint">(복수 선택 가능)</span>
+            </div>
             <div className="music-preferences">
               {musicGenres.map((genre) => (
                 <button

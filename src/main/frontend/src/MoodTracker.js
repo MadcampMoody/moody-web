@@ -266,6 +266,9 @@ function MoodTracker() {
         };
         setMoodRecords(newMoodRecords);
         setShowMoodSelector(false);
+        
+        // 감정 저장 후 diary 페이지로 이동
+        navigate(`/diary/${dateString}`);
       } else {
         console.error('감정 저장 실패');
         alert('감정 저장에 실패했습니다.');

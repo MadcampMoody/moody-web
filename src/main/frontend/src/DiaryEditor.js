@@ -238,7 +238,21 @@ function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, o
         {recommendedTracks.length > 0 && (
             <div ref={playlistRef} className="playlist-container" style={{marginTop: '30px', width: '100%'}}>
                 <h2 className="playlist-heading">{`${userName}님의 현재 무드에 맞는 플레이리스트를 만들어봤어요!`}</h2>
-                <div className="playlist-card" style={{border: '1px solid #ddd', borderRadius: '8px', padding: '15px', background: '#f9f9f9'}}>
+                <div className="playlist-card" style={{
+                    border: '1px solid #e2cdb0', 
+                    borderRadius: '8px', 
+                    padding: '15px', 
+                    background: '#fff8f1',
+                    backgroundImage: `
+                        radial-gradient(circle at 25% 25%, rgba(180, 140, 120, 0.015) 0%, transparent 50%),
+                        radial-gradient(circle at 75% 75%, rgba(180, 140, 120, 0.015) 0%, transparent 50%),
+                        linear-gradient(0deg, transparent 0%, rgba(180, 140, 120, 0.008) 50%, transparent 100%),
+                        linear-gradient(90deg, transparent 0%, rgba(180, 140, 120, 0.008) 50%, transparent 100%)
+                    `,
+                    backgroundSize: '100px 100px, 120px 120px, 2px 2px, 2px 2px',
+                    backgroundPosition: '0 0, 30px 30px, 0 0, 0 0',
+                    boxShadow: '0 2px 8px rgba(180, 140, 120, 0.1), inset 0 0 50px rgba(255, 248, 241, 0.8)'
+                }}>
                     <div className="playlist-header" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px'}}>
                         <div className="header-title" style={{fontWeight: 'bold', fontSize: '1.2rem'}}>{playlistTitle}</div>
                         <div className="spotify-link">

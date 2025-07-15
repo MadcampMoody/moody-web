@@ -532,3 +532,16 @@
     bottom: -40px;
   }
 } 
+
+.change-icon-svg {
+  width: 36px;
+  height: 36px;
+  display: block;
+  margin: 0 auto;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.change-btn:hover .change-icon-svg {
+  transform: rotate(90deg) scale(1.08);
+} 
