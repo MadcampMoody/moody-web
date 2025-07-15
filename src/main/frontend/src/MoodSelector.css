@@ -342,14 +342,9 @@
   width: 300px;
   height: 300px;
   transform: translate(-50%, -50%);
-  cursor: grab;
   user-select: none;
   z-index: 1001;
   animation: scaleIn 0.3s ease-out;
-}
-
-.inline-mood-container:active {
-  cursor: grabbing;
 }
 
 @keyframes scaleIn {
@@ -361,6 +356,34 @@
     opacity: 1;
     transform: translate(-50%, -50%) scale(1);
   }
+}
+
+/* 중앙의 변경 버튼 */
+.change-btn {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #505050;
+  color: white;
+  font-size: 24px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(80, 80, 80, 0.3);
+  z-index: 10;
+}
+
+.change-btn:hover {
+  background: #6a6a6a;
+  transform: translate(-50%, -50%) scale(1.1);
+  box-shadow: 0 6px 20px rgba(80, 80, 80, 0.4);
 }
 
 /* 원형으로 배치된 감정 아이템 */
@@ -410,8 +433,8 @@
 
 
 
-/* 드래그 힌트 */
-.inline-drag-hint {
+/* 변경 힌트 */
+.inline-change-hint {
   position: absolute;
   bottom: -50px;
   left: 50%;
@@ -459,6 +482,12 @@
   .inline-mood-item .mood-emoji {
     font-size: 28px;
   }
+  
+  .change-btn {
+    width: 50px;
+    height: 50px;
+    font-size: 20px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -492,7 +521,13 @@
     font-size: 24px;
   }
   
-  .inline-drag-hint {
+  .change-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+  }
+  
+  .inline-change-hint {
     font-size: 11px;
     bottom: -40px;
   }
