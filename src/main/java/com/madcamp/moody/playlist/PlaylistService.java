@@ -1,6 +1,8 @@
 package com.madcamp.moody.playlist;
 
 import com.madcamp.moody.music.MusicRepository;
+import com.madcamp.moody.music.MusicService;
+import com.madcamp.moody.music.MusicDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,11 +17,13 @@ public class PlaylistService {
 
     private final PlaylistRepository playlistRepository;
     private final MusicRepository musicRepository;
+    private final MusicService musicService;
 
     @Autowired
-    public PlaylistService(PlaylistRepository playlistRepository, MusicRepository musicRepository) {
+    public PlaylistService(PlaylistRepository playlistRepository, MusicRepository musicRepository, MusicService musicService) {
         this.playlistRepository = playlistRepository;
         this.musicRepository = musicRepository;
+        this.musicService = musicService;
     }
 
     // 모든 playlist 조회
@@ -96,10 +100,20 @@ public class PlaylistService {
             }
         }
         
-        // 새 플레이리스트 생성
+        // 1. 새 플레이리스트 생성 및 저장
         Playlist playlist = new Playlist(playlistDTO.getTitle(), playlistDTO.getDiaryId(), playlistDTO.getDate());
         Playlist savedPlaylist = playlistRepository.save(playlist);
         System.out.println("새 플레이리스트 생성: playlistId=" + savedPlaylist.getPlaylistId());
+
+        // 2. 연관된 음악들 저장
+        List<MusicDTO> musicDTOs = playlistDTO.getMusics();
+        if (musicDTOs != null && !musicDTOs.isEmpty()) {
+            // 각 MusicDTO에 새로 생성된 playlistId를 설정
+            musicDTOs.forEach(musicDTO -> musicDTO.setPlaylistId(savedPlaylist.getPlaylistId()));
+            // MusicService를 통해 음악 목록 저장
+            musicService.createMusics(musicDTOs);
+            System.out.println(musicDTOs.size() + "개의 음악을 플레이리스트에 추가했습니다.");
+        }
         
         return PlaylistDTO.fromEntity(savedPlaylist);
     }

@@ -125,8 +125,7 @@ body {
 }
 
 /* TopBar가 있는 모든 페이지의 기본 컨테이너 */
-.dashboard-container,
-.diary-main-paper {
+.dashboard-container {
   padding-top: 100px !important; /* TopBar 높이(80px) + 여유 공간(20px) */
   min-height: 100vh;
   box-sizing: border-box;

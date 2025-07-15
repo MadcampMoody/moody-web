@@ -1,7 +1,14 @@
 body, html {
   margin: 0;
   padding: 0;
-  background: #f5f1e8; /* 종이색으로 통일 */
+  min-height: 140vh;
+}
+.diary-editor-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  background: #f5f1e8; /* 종이색으로 변경 */
   /* 종이질감 배경 패턴 추가 */
   background-image: 
     radial-gradient(circle at 20% 80%, rgba(120, 119, 108, 0.03) 0%, transparent 50%),
@@ -18,75 +25,48 @@ body, html {
     50px 50px,
     100px 100px,
     0 0;
-}
-
-
-
-.diary-editor-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #F4E0CF;
   min-height: 100vh;
-  padding: 20px;
+  padding: 100px 20px 20px 20px; /* TopBar 높이(80px) + 여유공간(20px) 만큼 상단 패딩 추가 */
   box-sizing: border-box;
 }
 
 .diary-main-paper {
-  max-width: 800px;
+  max-width: 1200px; /* 800px에서 1000px로 증가 */
   width: 100%;
-  margin: 0 auto;
-  background: #fff8f1;
-  /* 종이질감 효과 강화 */
+  margin: 0 auto 0 auto; /* 하단 마진 제거 */
+  background: #fff8f1; /* 종이 배경색 복원 */
+  /* 종이질감 배경 패턴 추가 */
   background-image: 
-    /* 미세한 종이 섬유 질감 */
-    radial-gradient(circle at 25% 25%, rgba(180, 140, 120, 0.02) 0%, transparent 50%),
-    radial-gradient(circle at 75% 75%, rgba(180, 140, 120, 0.02) 0%, transparent 50%),
-    radial-gradient(circle at 50% 50%, rgba(180, 140, 120, 0.015) 0%, transparent 30%),
-    /* 종이 결 효과 */
-    linear-gradient(0deg, transparent 0%, rgba(180, 140, 120, 0.01) 50%, transparent 100%),
-    linear-gradient(90deg, transparent 0%, rgba(180, 140, 120, 0.01) 50%, transparent 100%),
-    /* 약간의 노이즈 효과 */
-    repeating-linear-gradient(
-      45deg,
-      transparent,
-      transparent 2px,
-      rgba(180, 140, 120, 0.005) 2px,
-      rgba(180, 140, 120, 0.005) 4px
-    );
+    radial-gradient(circle at 30% 30%, rgba(180, 140, 120, 0.015) 0%, transparent 50%),
+    radial-gradient(circle at 70% 70%, rgba(180, 140, 120, 0.015) 0%, transparent 50%),
+    radial-gradient(circle at 45% 80%, rgba(180, 140, 120, 0.01) 0%, transparent 60%);
   background-size: 
-    150px 150px,
     200px 200px,
-    100px 100px,
-    3px 3px,
-    3px 3px,
-    8px 8px;
+    150px 150px,
+    300px 300px;
   background-position: 
     0 0,
-    50px 50px,
-    25px 25px,
-    0 0,
-    0 0,
-    0 0;
+    75px 75px,
+    150px 20px;
   display: flex;
   flex-direction: column;
   align-items: stretch;
   justify-content: flex-start;
   position: relative;
-  padding: 20px;
+  padding: 20px 20px 12px 20px; /* 하단 패딩을 줄여서 테두리가 textarea 바로 아래에서 끝나도록 */
   box-sizing: border-box;
-  /* 종이 그림자 효과 */
+  /* #505050 색의 얇은 테두리 추가 */
+  border: 1px solid #505050;
+  border-radius: 8px;
+  /* 종이 그림자 효과 복원 */
   box-shadow: 
-    0 1px 3px rgba(180, 140, 120, 0.12),
-    0 1px 2px rgba(180, 140, 120, 0.08),
-    inset 0 0 100px rgba(255, 248, 241, 0.8);
-  border: 1px solid rgba(226, 205, 176, 0.3);
-  border-radius: 2px;
-  /* 종이 가장자리 효과 */
-  position: relative;
+    0 4px 12px rgba(180, 140, 120, 0.1),
+    0 1px 3px rgba(180, 140, 120, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  min-height: 80vh;
 }
 
-/* 종이 가장자리 찢어진 효과 */
+/* 종이 가장자리 효과 복원 */
 .diary-main-paper::before {
   content: '';
   position: absolute;
@@ -94,19 +74,17 @@ body, html {
   left: -1px;
   right: -1px;
   bottom: -1px;
-  background: 
-    radial-gradient(circle at 10% 10%, transparent 3px, rgba(226, 205, 176, 0.3) 3px, rgba(226, 205, 176, 0.3) 4px, transparent 4px),
-    radial-gradient(circle at 90% 10%, transparent 2px, rgba(226, 205, 176, 0.3) 2px, rgba(226, 205, 176, 0.3) 3px, transparent 3px),
-    radial-gradient(circle at 10% 90%, transparent 2px, rgba(226, 205, 176, 0.3) 2px, rgba(226, 205, 176, 0.3) 3px, transparent 3px),
-    radial-gradient(circle at 90% 90%, transparent 3px, rgba(226, 205, 176, 0.3) 3px, rgba(226, 205, 176, 0.3) 4px, transparent 4px);
-  background-size: 20px 20px, 25px 25px, 25px 25px, 20px 20px;
-  background-position: 0 0, 100% 0, 0 100%, 100% 100%;
-  background-repeat: no-repeat;
-  border-radius: 2px;
+  background: linear-gradient(45deg, 
+    rgba(180, 140, 120, 0.05) 0%, 
+    transparent 15%, 
+    transparent 85%, 
+    rgba(180, 140, 120, 0.05) 100%);
+  border-radius: 8px;
   z-index: -1;
+  pointer-events: none;
 }
 
-/* 종이 그림자 효과 강화 */
+/* 종이 그림자 효과 복원 */
 .diary-main-paper::after {
   content: '';
   position: absolute;
@@ -114,23 +92,19 @@ body, html {
   left: 3px;
   right: -3px;
   bottom: -3px;
-  background: 
-    linear-gradient(45deg, 
-      rgba(180, 140, 120, 0.08) 0%, 
-      rgba(180, 140, 120, 0.04) 50%, 
-      rgba(180, 140, 120, 0.02) 100%
-    );
-  border-radius: 2px;
+  background: rgba(180, 140, 120, 0.08);
+  border-radius: 8px;
   z-index: -2;
-  filter: blur(2px);
+  pointer-events: none;
+  filter: blur(4px);
 }
 
 .diary-date {
   position: absolute;
-  top: 32px;
+  top: 20px; /* 32px에서 수정 */
   left: 40px;
   color: #b48a78;
-  font-size: 1.1rem;
+  font-size: 1.5rem;
   font-weight: 500;
   opacity: 0.7;
   letter-spacing: 0.5px;
@@ -140,7 +114,7 @@ body, html {
 .diary-mood-center {
   position: absolute;
   left: 50%;
-  top: 32px;
+  top: 20px; /* 32px에서 수정 */
   transform: translateX(-50%);
   display: flex;
   flex-direction: column;
@@ -168,97 +142,83 @@ body, html {
 
 .diary-textarea {
   width: 100%;
-  max-width: 900px;
-  min-height: 45vh;
-  background: #fff;
-  /* 종이질감 배경 추가 */
+  max-width: 1100px;
+  min-height: 55vh; /* 45vh에서 25vh로 수정 */
+  background: rgba(255, 248, 241, 0.5); /* 반투명 종이 배경 */
+  /* 종이질감과 노트 줄을 함께 적용 */
   background-image: 
-    /* 미세한 종이 섬유 질감 */
-    radial-gradient(circle at 30% 30%, rgba(180, 140, 120, 0.015) 0%, transparent 50%),
-    radial-gradient(circle at 70% 70%, rgba(180, 140, 120, 0.015) 0%, transparent 50%),
-    /* 종이 결 효과 */
-    linear-gradient(0deg, transparent 0%, rgba(180, 140, 120, 0.008) 50%, transparent 100%),
-    linear-gradient(90deg, transparent 0%, rgba(180, 140, 120, 0.008) 50%, transparent 100%),
-    /* 노트 줄 효과 (옅게) */
+    /* 노트북 가로 줄 */
     repeating-linear-gradient(
       transparent 0px,
       transparent 31px,
-      rgba(226, 205, 176, 0.15) 31px,
-      rgba(226, 205, 176, 0.15) 32px
+      rgba(226, 205, 176, 0.25) 31px,
+      rgba(226, 205, 176, 0.25) 32px
     ),
-    /* 왼쪽 여백선 */
+    /* 왼쪽 여백선 (빨간 선) */
     linear-gradient(
       90deg,
       transparent 0px,
-      transparent 49px,
-      rgba(255, 182, 193, 0.3) 49px,
-      rgba(255, 182, 193, 0.3) 51px,
-      transparent 51px
-    );
+      transparent 48px,
+      rgba(255, 182, 193, 0.4) 48px,
+      rgba(255, 182, 193, 0.4) 50px,
+      transparent 50px
+    ),
+    /* 종이질감 */
+    radial-gradient(circle at 25% 75%, rgba(180, 140, 120, 0.01) 0%, transparent 50%),
+    radial-gradient(circle at 75% 25%, rgba(180, 140, 120, 0.008) 0%, transparent 50%);
   background-size: 
-    120px 120px,
-    160px 160px,
-    2px 2px,
-    2px 2px,
     100% 32px,
-    100% 100%;
+    100% 100%,
+    120px 120px,
+    160px 160px;
   background-position: 
     0 0,
-    40px 40px,
     0 0,
     0 0,
-    0 0,
-    0 0;
-  border: 1.5px solid #e2cdb0;
-  border-radius: 12px;
+    40px 40px;
+  border: none; /* 테두리 제거 */
+  border-radius: 0;
   font-size: 1.25rem;
   font-family: 'Nanum Pen Script', 'Segoe UI', 'Apple SD Gothic Neo', sans-serif;
   color: #7a5a3a;
-  padding: 32px 24px 32px 60px; /* 왼쪽 패딩 증가 */
-  margin: 120px auto 0 auto;
+  padding: 32px 24px 24px 60px; /* 왼쪽 패딩을 늘려서 여백선 공간 확보 */
+  margin: 110px auto 0 auto; /* 윗 여백을 140px에서 110px으로 조정 */
   resize: vertical;
-  box-shadow: 
-    0 1.5px 0 #e2cdb0 inset,
-    0 2px 8px rgba(180, 140, 120, 0.1);
-  transition: border 0.2s, box-shadow 0.2s;
+  box-shadow: none; /* 그림자 제거 */
+  transition: none;
   box-sizing: border-box;
   display: block;
-  line-height: 32px; /* 줄 간격을 노트 줄과 맞춤 */
+  line-height: 32px;
 }
 .diary-textarea:focus {
   outline: none;
-  border: 2px solid #e2cdb0;
-  background: #fff3e6;
-  /* 포커스 시에도 종이질감 유지 */
+  background: rgba(255, 248, 241, 0.7); /* 포커스 시 조금 더 진한 배경 */
+  /* 포커스 시에도 종이질감과 노트 줄 효과 유지 */
   background-image: 
-    radial-gradient(circle at 30% 30%, rgba(180, 140, 120, 0.02) 0%, transparent 50%),
-    radial-gradient(circle at 70% 70%, rgba(180, 140, 120, 0.02) 0%, transparent 50%),
-    linear-gradient(0deg, transparent 0%, rgba(180, 140, 120, 0.01) 50%, transparent 100%),
-    linear-gradient(90deg, transparent 0%, rgba(180, 140, 120, 0.01) 50%, transparent 100%),
+    /* 노트북 가로 줄 (포커스 시 조금 더 진하게) */
     repeating-linear-gradient(
       transparent 0px,
       transparent 31px,
-      rgba(226, 205, 176, 0.2) 31px,
-      rgba(226, 205, 176, 0.2) 32px
+      rgba(226, 205, 176, 0.35) 31px,
+      rgba(226, 205, 176, 0.35) 32px
     ),
+    /* 왼쪽 여백선 (포커스 시 조금 더 진하게) */
     linear-gradient(
       90deg,
       transparent 0px,
-      transparent 49px,
-      rgba(255, 182, 193, 0.4) 49px,
-      rgba(255, 182, 193, 0.4) 51px,
-      transparent 51px
-    );
+      transparent 48px,
+      rgba(255, 182, 193, 0.5) 48px,
+      rgba(255, 182, 193, 0.5) 50px,
+      transparent 50px
+    ),
+    /* 종이질감 */
+    radial-gradient(circle at 25% 75%, rgba(180, 140, 120, 0.015) 0%, transparent 50%),
+    radial-gradient(circle at 75% 25%, rgba(180, 140, 120, 0.012) 0%, transparent 50%);
   background-size: 
-    120px 120px,
-    160px 160px,
-    2px 2px,
-    2px 2px,
     100% 32px,
-    100% 100%;
-  box-shadow: 
-    0 1.5px 0 #e2cdb0 inset,
-    0 4px 12px rgba(180, 140, 120, 0.15);
+    100% 100%,
+    120px 120px,
+    160px 160px;
 }
 
 /* 텍스트 영역 플레이스홀더 스타일 */
@@ -270,8 +230,8 @@ body, html {
 
 .diary-actions {
   width: 100%;
-  max-width: 900px;
-  margin: 24px auto 0 auto;
+  max-width: 1000px; /* diary-main-paper와 동일하게 1000px로 조정 */
+  margin: 24px auto 0 auto; /* 테두리 영역과 간격을 두고 중앙 정렬 */
   display: flex;
   justify-content: flex-end;
   gap: 16px;
@@ -285,6 +245,42 @@ body, html {
   text-align: center;
   font-size: 1.3rem;
   text-shadow: 0 1px 2px rgba(180, 140, 120, 0.1);
+}
+
+/* 플레이리스트 컨테이너 - 테두리 밖에 위치 */
+.playlist-container {
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 20px;
+  box-sizing: border-box;
+  background: rgba(255, 248, 241, 0.3); /* 자연스러운 종이 배경 */
+  /* 종이질감 배경 패턴 추가 */
+  background-image: 
+    radial-gradient(circle at 20% 30%, rgba(180, 140, 120, 0.008) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(180, 140, 120, 0.008) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(180, 140, 120, 0.005) 0%, transparent 60%);
+  background-size: 
+    180px 180px,
+    200px 200px,
+    250px 250px;
+  background-position: 
+    0 0,
+    100px 50px,
+    50px 100px;
+  border-radius: 8px;
+  box-shadow: 
+    0 2px 8px rgba(180, 140, 120, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+/* 에러 메시지와 로딩 메시지도 중앙 정렬 */
+.error-message {
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 20px;
+  box-sizing: border-box;
 }
 
 /* 종이질감 버튼 스타일 개선 */
@@ -373,18 +369,94 @@ body, html {
     0 4px 10px rgba(180, 140, 120, 0.15);
 }
 
+/* 상단 저장 버튼 스타일 */
+.diary-save-btn-top {
+  position: absolute;
+  top: 15px; /* 20px에서 수정 */
+  right: 70px; /* 80px에서 수정 */
+  background: #505050;
+  /* 종이질감 배경 추가 */
+  background-image: 
+    linear-gradient(135deg, #505050 0%, #454545 100%),
+    radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 70% 70%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
+  background-size: 
+    100% 100%,
+    60px 60px,
+    80px 80px;
+  background-position: 
+    0 0,
+    0 0,
+    15px 15px;
+  color: #ffffff;
+  border: 1.5px solid #606060;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  padding: 4px; /* 아이콘을 위해 패딩 조정 */
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 
+    0 2px 6px rgba(80, 80, 80, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  min-width: auto; /* 최소 너비 제거 */
+  width: 40px; /* 고정 너비 */
+  height: 40px; /* 고정 높이 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5; /* 드롭다운보다 낮지만 다른 요소들 위에 */
+}
+
+.diary-save-btn-top:hover {
+  background: #404040;
+  background-image: 
+    linear-gradient(135deg, #404040 0%, #353535 100%),
+    radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 70% 70%, rgba(255, 255, 255, 0.08) 0%, transparent 50%);
+  background-size: 
+    100% 100%,
+    60px 60px,
+    80px 80px;
+  color: #ffffff;
+  border-color: #505050;
+  transform: translateY(-1px);
+  box-shadow: 
+    0 3px 8px rgba(80, 80, 80, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.diary-save-btn-top:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  background: #6a6a6a;
+  border-color: #707070;
+  color: #cccccc;
+}
+
+/* 로딩 중 텍스트 스타일 */
+.diary-save-btn-top span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #ffffff;
+}
+
 /* 드롭다운 스타일 */
 .diary-dropdown-container {
   position: absolute;
-  top: 20px;
-  right: 20px;
+  top: 15px;
+  right: 15px;
   z-index: 10;
 }
 
 .diary-dropdown-trigger {
-  background: rgba(255, 248, 241, 0.9);
-  border: 1.5px solid #e2cdb0;
-  border-radius: 8px;
+  background: #505050;
+  border: 1.5px solid #606060;
+  border-radius: 6px;
   width: 40px;
   height: 40px;
   display: flex;
@@ -392,22 +464,23 @@ body, html {
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(244, 224, 207, 0.3);
-  backdrop-filter: blur(5px);
+  box-shadow: 
+    0 2px 6px rgba(80, 80, 80, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  padding: 4px;
 }
 
 .diary-dropdown-trigger:hover {
-  background: rgba(247, 207, 160, 0.9);
-  border-color: #d4b896;
+  background: #404040;
+  border-color: #505050;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(244, 224, 207, 0.4);
+  box-shadow: 
+    0 3px 8px rgba(80, 80, 80, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 
 .dropdown-dots {
-  font-size: 18px;
-  color: #7a5a3a;
-  font-weight: bold;
-  line-height: 1;
+  display: none; /* 기존 텍스트 아이콘 숨김 */
 }
 
 .diary-dropdown-menu {
@@ -476,37 +549,77 @@ body, html {
     max-width: 100%;
     min-height: 30vh;
     font-size: 1rem;
-    padding: 12px 8px 12px 40px; /* 모바일에서도 여백선 고려 */
+    padding: 12px 8px 12px 45px; /* 모바일에서도 여백선을 위한 왼쪽 패딩 */
   }
   
-  /* 모바일에서 종이질감 최적화 */
-  .diary-main-paper {
-    background-size: 
-      100px 100px,
-      120px 120px,
-      80px 80px,
-      2px 2px,
-      2px 2px,
-      6px 6px;
+  /* 모바일에서 상단 저장 버튼 스타일 조정 */
+  .diary-save-btn-top {
+    font-size: 0.85rem;
+    padding: 8px; /* 모바일에서는 조금 더 작게 */
+    min-width: auto;
+    width: 36px; /* 모바일에서는 조금 더 작게 */
+    height: 36px;
+    top: 16px; /* 모바일에서는 조금 더 가깝게 */
+    right: 12px;
   }
   
+  /* 모바일에서 아이콘 크기 조정 */
+  .diary-save-btn-top img {
+    width: 14px !important;
+    height: 14px !important;
+  }
+  
+  /* 모바일에서도 배경 통합 스타일 유지 */
   .diary-textarea {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 12px 8px 12px 45px; /* 모바일에서도 여백선을 위한 왼쪽 패딩 */
+    background-image: 
+      /* 가로 줄 (모바일용) */
+      repeating-linear-gradient(
+        transparent 0px,
+        transparent 27px,
+        rgba(180, 140, 120, 0.3) 27px,
+        rgba(180, 140, 120, 0.3) 28px
+      ),
+      /* 왼쪽 여백선 (모바일용) */
+      linear-gradient(
+        90deg,
+        transparent 0px,
+        transparent 40px,
+        rgba(255, 182, 193, 0.4) 40px,
+        rgba(255, 182, 193, 0.4) 42px,
+        transparent 42px
+      );
     background-size: 
-      80px 80px,
-      100px 100px,
-      1px 1px,
-      1px 1px,
       100% 28px,
       100% 100%;
     line-height: 28px;
   }
   
   .diary-textarea:focus {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    background-image: 
+      /* 가로 줄 (모바일용, 포커스 시) */
+      repeating-linear-gradient(
+        transparent 0px,
+        transparent 27px,
+        rgba(180, 140, 120, 0.4) 27px,
+        rgba(180, 140, 120, 0.4) 28px
+      ),
+      /* 왼쪽 여백선 (모바일용, 포커스 시) */
+      linear-gradient(
+        90deg,
+        transparent 0px,
+        transparent 40px,
+        rgba(255, 182, 193, 0.5) 40px,
+        rgba(255, 182, 193, 0.5) 42px,
+        transparent 42px
+      );
     background-size: 
-      80px 80px,
-      100px 100px,
-      1px 1px,
-      1px 1px,
       100% 28px,
       100% 100%;
   }
@@ -541,8 +654,8 @@ body, html {
   }
 }
 
-/* 종이질감 애니메이션 효과 */
-@keyframes paperTexture {
+/* 종이질감 애니메이션 효과 제거 */
+/* @keyframes paperTexture {
   0% {
     background-position: 0 0, 50px 50px, 25px 25px, 0 0, 0 0, 0 0;
   }
@@ -553,4 +666,4 @@ body, html {
 
 .diary-main-paper {
   animation: paperTexture 20s ease-in-out infinite alternate;
-}
+} */
