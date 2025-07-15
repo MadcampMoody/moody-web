@@ -35,6 +35,42 @@
   background-color: #b0b0b0;
 }
 
+.spotify-login-btn {
+  background-color: #1DB954;
+  border: none;
+  border-radius: 25px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  white-space: nowrap;
+}
+
+.spotify-login-btn:hover {
+  background-color: #1ed760;
+}
+
+.spotify-success-btn {
+  background-color: #28a745;
+  border: none;
+  border-radius: 25px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: white;
+  cursor: default;
+  white-space: nowrap;
+  opacity: 0.9;
+}
+
+.spotify-success-btn:disabled {
+  background-color: #28a745;
+  color: white;
+  cursor: default;
+}
+
 .profile-btn {
   background-color: #c4c4c4;
   border: none;
