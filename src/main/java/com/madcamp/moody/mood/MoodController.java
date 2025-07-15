@@ -18,6 +18,7 @@ import java.util.ArrayList;
 
 @RestController
 @RequestMapping("/api/mood")
+@CrossOrigin(origins = "http://127.0.0.1:3000", allowCredentials = "true")
 public class MoodController {
 
     @Autowired
@@ -35,9 +36,23 @@ public class MoodController {
             @AuthenticationPrincipal OAuth2User oauth2User
     ) {
         try {
-            // 1. 로그인한 사용자 찾기
-            String oauthId = oauth2User.getAttribute("id").toString();
-            User user = userRepository.findByOauthId(oauthId);
+            if (oauth2User == null) {
+                return ResponseEntity.status(401).body("인증이 필요합니다.");
+            }
+
+            User user = null;
+            
+            // Spotify 사용자인지 확인 (display_name 속성이 있으면 Spotify)
+            String spotifyDisplayName = oauth2User.getAttribute("display_name");
+            if (spotifyDisplayName != null) {
+                // Spotify 로그인 사용자
+                String spotifyId = oauth2User.getAttribute("id");
+                user = userRepository.findBySpotifyOauthId(spotifyId);
+            } else {
+                // 카카오 로그인 사용자
+                String kakaoId = oauth2User.getAttribute("id").toString();
+                user = userRepository.findByOauthId(kakaoId);
+            }
             
             if (user == null) {
                 return ResponseEntity.status(404).body("사용자를 찾을 수 없습니다");
@@ -69,28 +84,49 @@ public class MoodController {
         @PathVariable String date,
         @AuthenticationPrincipal OAuth2User oauth2User
     ) {
-        String oauthId = oauth2User.getAttribute("id").toString();
-        User user = userRepository.findByOauthId(oauthId);
+        try {
+            if (oauth2User == null) {
+                return ResponseEntity.status(401).body("인증이 필요합니다.");
+            }
 
-        if (user == null) {
-            return ResponseEntity.status(404).body("User not found");
+            User user = null;
+            
+            // Spotify 사용자인지 확인 (display_name 속성이 있으면 Spotify)
+            String spotifyDisplayName = oauth2User.getAttribute("display_name");
+            if (spotifyDisplayName != null) {
+                // Spotify 로그인 사용자
+                String spotifyId = oauth2User.getAttribute("id");
+                user = userRepository.findBySpotifyOauthId(spotifyId);
+            } else {
+                // 카카오 로그인 사용자
+                String kakaoId = oauth2User.getAttribute("id").toString();
+                user = userRepository.findByOauthId(kakaoId);
+            }
+
+            if (user == null) {
+                return ResponseEntity.status(404).body("사용자를 찾을 수 없습니다.");
+            }
+
+            // 감정 조회
+            Mood mood = moodRepository.findByUserAndDate(user, LocalDate.parse(date));
+            // 일기 조회 (Diary 테이블이 있다면)
+            Diary diary = null;
+
+            if (mood != null) {
+                diary = diaryRepository.findByMood(mood);
+            }
+
+            // 임시로 일기 내용은 빈 문자열로 반환
+            Map<String, Object> result = new HashMap<>();
+            result.put("mood", mood != null ? new MoodDTO(mood) : null);
+            result.put("diary", diary != null ? diary : null);
+
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            System.err.println("무드/다이어리 조회 오류: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("서버 오류가 발생했습니다: " + e.getMessage());
         }
-
-        // 감정 조회
-        Mood mood = moodRepository.findByUserAndDate(user, LocalDate.parse(date));
-        // 일기 조회 (Diary 테이블이 있다면)
-        Diary diary = null;
-
-        if (mood != null) {
-            diary = diaryRepository.findByMood(mood);
-        }
-
-        // 임시로 일기 내용은 빈 문자열로 반환
-        Map<String, Object> result = new HashMap<>();
-        result.put("mood", mood != null ? new MoodDTO(mood) : null);
-        result.put("diary", diary != null ? diary : null);
-
-        return ResponseEntity.ok(result);
     }
 
     @GetMapping("/month")
@@ -99,23 +135,44 @@ public class MoodController {
         @RequestParam int month,
         @AuthenticationPrincipal OAuth2User oauth2User
     ) {
-        String oauthId = oauth2User.getAttribute("id").toString();
-        User user = userRepository.findByOauthId(oauthId);
+        try {
+            if (oauth2User == null) {
+                return ResponseEntity.status(401).body("인증이 필요합니다.");
+            }
 
-        if (user == null) {
-            return ResponseEntity.status(404).body("User not found");
+            User user = null;
+            
+            // Spotify 사용자인지 확인 (display_name 속성이 있으면 Spotify)
+            String spotifyDisplayName = oauth2User.getAttribute("display_name");
+            if (spotifyDisplayName != null) {
+                // Spotify 로그인 사용자
+                String spotifyId = oauth2User.getAttribute("id");
+                user = userRepository.findBySpotifyOauthId(spotifyId);
+            } else {
+                // 카카오 로그인 사용자
+                String kakaoId = oauth2User.getAttribute("id").toString();
+                user = userRepository.findByOauthId(kakaoId);
+            }
+
+            if (user == null) {
+                return ResponseEntity.status(404).body("사용자를 찾을 수 없습니다.");
+            }
+
+            List<MoodDTO> moodDTOs = new ArrayList<>();
+            LocalDate startDate = LocalDate.of(year, month, 1);
+            LocalDate endDate = LocalDate.of(year, month, LocalDate.of(year, month, 1).lengthOfMonth());
+
+            List<Mood> moods = moodRepository.findByUserAndDateBetween(user, startDate, endDate);
+
+            for (Mood mood : moods) {
+                moodDTOs.add(new MoodDTO(mood));
+            }
+
+            return ResponseEntity.ok(moodDTOs);
+        } catch (Exception e) {
+            System.err.println("월별 무드 조회 오류: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("서버 오류가 발생했습니다: " + e.getMessage());
         }
-
-        List<MoodDTO> moodDTOs = new ArrayList<>();
-        LocalDate startDate = LocalDate.of(year, month, 1);
-        LocalDate endDate = LocalDate.of(year, month, LocalDate.of(year, month, 1).lengthOfMonth());
-
-        List<Mood> moods = moodRepository.findByUserAndDateBetween(user, startDate, endDate);
-
-        for (Mood mood : moods) {
-            moodDTOs.add(new MoodDTO(mood));
-        }
-
-        return ResponseEntity.ok(moodDTOs);
     }
 }

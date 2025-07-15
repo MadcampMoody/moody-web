@@ -1,0 +1,232 @@
+.spotify-player {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px; /* 간격 줄임 */
+  padding: 8px 16px;
+  background: #505050;
+  border-radius: 12px;
+  color: white;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  box-shadow: 0 4px 12px rgba(80, 80, 80, 0.3);
+  width: 750px; /* 고정 너비 */
+  max-width: 750px;
+  min-width: 750px;
+}
+
+.spotify-player.loading {
+  justify-content: center;
+  width: 200px;
+  min-width: 200px;
+  max-width: 200px;
+  padding: 12px 20px;
+}
+
+.loading-text {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.now-playing {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  max-width: 350px; /* 최대 너비 확장 */
+  overflow: hidden;
+}
+
+.track-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  overflow: hidden;
+}
+
+.album-cover {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  object-fit: cover;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  flex-shrink: 0;
+}
+
+.track-details {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex: 1;
+  min-width: 0; /* 유연하게 조정 가능 */
+}
+
+.track-name, .artist-name {
+  white-space: nowrap;
+  overflow: hidden;
+  animation: none;
+}
+
+/* 텍스트가 너무 길 때 흐르는 애니메이션 */
+.track-name.scrolling, .artist-name.scrolling {
+  animation: scrollText 10s linear infinite;
+  will-change: transform;
+}
+
+@keyframes scrollText {
+  0% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(0);
+  }
+  80% {
+    transform: translateX(calc(-100% + var(--scroll-width, 250px)));
+  }
+  100% {
+    transform: translateX(calc(-100% + var(--scroll-width, 250px)));
+  }
+}
+
+.track-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+}
+
+.artist-name {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.player-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px; /* 간격 줄임 */
+  flex-shrink: 0;
+  flex: 0 0 auto; /* 중앙 고정 */
+}
+
+.control-btn {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 6px; /* 패딩 줄임 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.control-btn:hover {
+  transform: scale(1.05);
+}
+
+.control-btn.play-pause {
+  background-color: white;
+  color: #505050;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.control-btn.play-pause:hover {
+  background-color: rgba(255, 255, 255, 0.9);
+  transform: scale(1.1);
+}
+
+.control-btn.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.no-track-placeholder {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.progress-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  max-width: 350px; /* 최대 너비 확장 */
+  justify-content: flex-end; /* 우측 정렬 */
+}
+
+.time-display {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.7);
+  min-width: 35px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 4px;
+  background-color: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+  overflow: hidden;
+  cursor: pointer;
+  min-width: 100px;
+  transition: height 0.2s ease;
+  position: relative;
+}
+
+.progress-bar:hover {
+  height: 6px;
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: white;
+  border-radius: 2px;
+  transition: width 0.1s ease;
+  pointer-events: none; /* 클릭 이벤트가 부모로 전달되도록 */
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .spotify-player {
+    width: 320px;
+    min-width: 320px;
+    max-width: 320px;
+    gap: 8px;
+  }
+  
+  .now-playing {
+    max-width: 120px;
+  }
+  
+  .progress-section {
+    max-width: 120px;
+  }
+  
+  @keyframes scrollText {
+    0% {
+      transform: translateX(0);
+    }
+    20% {
+      transform: translateX(0);
+    }
+    80% {
+      transform: translateX(calc(-100% + 80px));
+    }
+    100% {
+      transform: translateX(calc(-100% + 80px));
+    }
+  }
+} 

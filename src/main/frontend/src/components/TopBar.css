@@ -95,14 +95,13 @@
 }
 
 .player-controls {
-  background-color: #666;
-  border-radius: 25px; /* 적당한 둥근 모서리 */
-  padding: 8px 20px; /* 좌우 패딩을 동일하게 */
+  background: none;
+  border: none;
+  padding: 0;
   display: flex;
   align-items: center;
-  justify-content: center; /* 중앙 정렬 */
-  gap: 12px; /* 간격을 균등하게 */
-  height: 54px; /* TopBar 안에 맞도록 높이 조정 */
+  justify-content: center;
+  gap: 12px;
   box-sizing: border-box;
 }
 
@@ -163,7 +162,7 @@ body {
 /* TopBar가 있는 모든 페이지의 기본 컨테이너 */
 .dashboard-container,
 .diary-main-paper {
-  padding-top: 100px !important; /* TopBar 높이(80px) + 여유 공간(20px) */
+  padding-top: 80px !important; /* TopBar 높이(65px) + 여유 공간(15px) */
   min-height: 100vh;
   box-sizing: border-box;
 } 
