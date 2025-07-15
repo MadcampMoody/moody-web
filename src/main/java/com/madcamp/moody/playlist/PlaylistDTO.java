@@ -1,7 +1,9 @@
 package com.madcamp.moody.playlist;
 
-import java.time.LocalDateTime;
+import com.madcamp.moody.music.MusicDTO;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
 
 public class PlaylistDTO {
     private Long playlistId;
@@ -9,6 +11,7 @@ public class PlaylistDTO {
     private Long diaryId;
     private LocalDate date;
     private LocalDateTime createdAt;
+    private List<MusicDTO> musics; // 음악 목록 추가
 
     // 기본 생성자
     public PlaylistDTO() {
@@ -99,6 +102,14 @@ public class PlaylistDTO {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public List<MusicDTO> getMusics() {
+        return musics;
+    }
+
+    public void setMusics(List<MusicDTO> musics) {
+        this.musics = musics;
     }
 
     @Override

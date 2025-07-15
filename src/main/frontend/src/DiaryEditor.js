@@ -17,6 +17,38 @@ function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, o
   const [userName, setUserName] = useState('사용자');
   const playlistRef = useRef(null);
 
+  // 배경 스타일 동적 적용
+  useEffect(() => {
+    // 컴포넌트 마운트 시 배경 스타일 적용
+    document.body.style.background = '#f5f1e8';
+    document.body.style.backgroundImage = `
+      radial-gradient(circle at 20% 80%, rgba(120, 119, 108, 0.03) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(120, 119, 108, 0.03) 0%, transparent 50%),
+      radial-gradient(circle at 40% 40%, rgba(120, 119, 108, 0.03) 0%, transparent 50%),
+      linear-gradient(90deg, transparent 79px, rgba(120, 119, 108, 0.04) 79px, rgba(120, 119, 108, 0.04) 81px, transparent 81px)
+    `;
+    document.body.style.backgroundSize = `
+      300px 300px,
+      200px 200px,
+      400px 400px,
+      100px 100px
+    `;
+    document.body.style.backgroundPosition = `
+      0 0,
+      50px 50px,
+      100px 100px,
+      0 0
+    `;
+
+    // 컴포넌트 언마운트 시 배경 스타일 제거 (cleanup 함수)
+    return () => {
+      document.body.style.background = '';
+      document.body.style.backgroundImage = '';
+      document.body.style.backgroundSize = '';
+      document.body.style.backgroundPosition = '';
+    };
+  }, []); // 빈 배열을 전달하여 컴포넌트가 마운트/언마운트될 때 한 번만 실행
+
   // 외부 클릭 시 dropdown 닫기
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -116,22 +148,40 @@ function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, o
     setPlaylistTitle('');
 
     try {
-      // 1. 일기 저장 (내용이 비어있어도 저장)
-      await axios.post('/api/diary', {
+      // 1. 일기 저장하고 생성된 diaryId 받기
+      const diaryResponse = await axios.post('/api/diary', {
         content: content,
         date: selectedDate
       }, { withCredentials: true });
 
-      // 2. 음악 추천 요청 (date 필드 추가)
-      const response = await axios.post('/api/groq/recommend-music', 
+      const savedDiary = diaryResponse.data;
+      if (!savedDiary || !savedDiary.id) {
+        throw new Error("일기 저장 후 ID를 받아오지 못했습니다.");
+      }
+      const diaryId = savedDiary.id;
+
+      // 2. 음악 추천 요청
+      const recommendResponse = await axios.post('/api/groq/recommend-music', 
         { prompt: content, date: selectedDate },
         { withCredentials: true }
       );
       
-      setRecommendedTracks(response.data.tracks || []);
-      // 날짜 기반 플레이리스트 제목 생성
+      const tracks = recommendResponse.data.tracks || [];
+      setRecommendedTracks(tracks);
+      
       const formattedDate = selectedDate || new Date().toISOString().split('T')[0];
-      setPlaylistTitle(`${formattedDate}의 플레이리스트`);
+      const newPlaylistTitle = `${formattedDate}의 플레이리스트`;
+      setPlaylistTitle(newPlaylistTitle);
+
+      // 3. 플레이리스트 생성 요청
+      if (tracks.length > 0) {
+        await axios.post('/api/playlists', {
+          title: newPlaylistTitle,
+          diaryId: diaryId,
+          date: formattedDate,
+          musics: tracks.map(track => ({ musicUrl: track.spotifyUrl }))
+        }, { withCredentials: true });
+      }
 
     } catch (e) {
       setError("요청 처리 중 오류가 발생했습니다: " + (e.response?.data?.message || e.message));
@@ -161,56 +211,71 @@ function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, o
   return (
     <div>
       <TopBar />
-      <div className="diary-main-paper page-content" style={{ position: "relative" }}>
-        {/* 상단 바: 날짜, 감정, 드롭다운 */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative" }}>
-        {/* 날짜 (왼쪽) */}
-        <div className="diary-date">{formatShortDate(selectedDate)}</div>
-        {/* 감정 (가운데) */}
-        <div className="diary-mood-center">
-          {selectedMood && (
-            <>
-              <span className="diary-mood-emoji">{selectedMood.emoji}</span>
-              <span className="diary-mood-name">{selectedMood.name}</span>
-            </>
-          )}
-        </div>
-        {/* 드롭다운 (오른쪽) */}
-        {diary && content && (
-          <div className="diary-dropdown-container" ref={dropdownRef}>
-            <button 
-              className="diary-dropdown-trigger"
-              onClick={() => setShowDropdown(v => !v)}
-            >
-              <span className="dropdown-dots">⋮</span>
-            </button>
-            {showDropdown && (
-              <div className="diary-dropdown-menu">
-                <div 
-                  className="diary-dropdown-item"
-                  onClick={() => {
-                    setShowDropdown(false);
-                    /* 수정 모드 진입 */
-                  }}
+      <div className="diary-editor-container">
+        <div className="diary-main-paper page-content" style={{ position: "relative" }}>
+          {/* 상단 바: 날짜, 감정, 저장버튼, 드롭다운 */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative" }}>
+            {/* 날짜 (왼쪽) */}
+            <div className="diary-date">{formatShortDate(selectedDate)}</div>
+            {/* 감정 (가운데) */}
+            <div className="diary-mood-center">
+              {selectedMood && (
+                <>
+                  <span className="diary-mood-emoji">{selectedMood.emoji}</span>
+                  <span className="diary-mood-name">{selectedMood.name}</span>
+                </>
+              )}
+            </div>
+            {/* 드롭다운 (오른쪽) */}
+            {diary && content && (
+              <div className="diary-dropdown-container" ref={dropdownRef}>
+                <button 
+                  className="diary-dropdown-trigger"
+                  onClick={() => setShowDropdown(v => !v)}
                 >
-                  <span className="dropdown-icon">✏️</span>
-                  수정
-                </div>
-                <div 
-                  className="diary-dropdown-item diary-dropdown-delete"
-                  onClick={() => {
-                    setShowDropdown(false);
-                    handleDelete();
-                  }}
-                >
-                  <span className="dropdown-icon">🗑️</span>
-                  삭제
-                </div>
+                  <img src={require('./assets/dropdown.png')} alt="메뉴" style={{ width: '24px', height: '24px' }} />
+                  <span className="dropdown-dots">⋮</span>
+                </button>
+                {showDropdown && (
+                  <div className="diary-dropdown-menu">
+                    <div 
+                      className="diary-dropdown-item"
+                      onClick={() => {
+                        setShowDropdown(false);
+                        /* 수정 모드 진입 */
+                      }}
+                    >
+                      <span className="dropdown-icon">✏️</span>
+                      수정
+                    </div>
+                    <div 
+                      className="diary-dropdown-item diary-dropdown-delete"
+                      onClick={() => {
+                        setShowDropdown(false);
+                        handleDelete();
+                      }}
+                    >
+                      <span className="dropdown-icon">🗑️</span>
+                      삭제
+                    </div>
+                  </div>
+                )}
               </div>
             )}
-          </div>
-        )}
-      </div>
+            
+          {/* 저장 버튼 - 내용이 변경되었고, 비어있지 않을 때만 표시 */}
+          {content.length > 0 && content !== initialContent && (
+            <button className="diary-save-btn-top" onClick={handleSave} disabled={loading}>
+              {loading ? (
+                <span style={{ fontSize: '0.85rem' }}>...</span>
+              ) : (
+                <img src={require('./assets/check.png')} alt="저장" style={{ width: '24px', height: '24px' }} />
+              )}
+            </button>
+          )}
+        </div>
+
+          {/* 일기 작성 textarea */}
           <textarea
             className="diary-textarea"
             placeholder="오늘의 일기를 작성해보세요..."
@@ -218,15 +283,9 @@ function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, o
             onChange={(e) => setContent(e.target.value)}
             rows={8}
           />
-          <div className="diary-actions">
-            <button className="diary-save-btn" onClick={handleSave} disabled={loading}>
-              {loading ? '추천받는 중...' : '저장 및 음악 추천받기'}
-            </button>
-            <button className="diary-cancel-btn" onClick={onCancel} disabled={loading}>
-              취소
-            </button>
-          </div>
+        </div>
 
+        {/* 테두리 밖의 요소들 */}
         {error && <p className="error-message" style={{color: 'red', marginTop: '20px', textAlign: 'center'}}>{error}</p>}
 
         {initialLoading && (
@@ -235,23 +294,16 @@ function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, o
           </div>
         )}
 
+        {/* 플레이리스트 섹션 - 테두리 밖 */}
         {recommendedTracks.length > 0 && (
             <div ref={playlistRef} className="playlist-container" style={{marginTop: '30px', width: '100%'}}>
                 <h2 className="playlist-heading">{`${userName}님의 현재 무드에 맞는 플레이리스트를 만들어봤어요!`}</h2>
                 <div className="playlist-card" style={{
-                    border: '1px solid #e2cdb0', 
-                    borderRadius: '8px', 
+                    border: 'none', 
+                    borderRadius: '0', 
                     padding: '15px', 
-                    background: '#fff8f1',
-                    backgroundImage: `
-                        radial-gradient(circle at 25% 25%, rgba(180, 140, 120, 0.015) 0%, transparent 50%),
-                        radial-gradient(circle at 75% 75%, rgba(180, 140, 120, 0.015) 0%, transparent 50%),
-                        linear-gradient(0deg, transparent 0%, rgba(180, 140, 120, 0.008) 50%, transparent 100%),
-                        linear-gradient(90deg, transparent 0%, rgba(180, 140, 120, 0.008) 50%, transparent 100%)
-                    `,
-                    backgroundSize: '100px 100px, 120px 120px, 2px 2px, 2px 2px',
-                    backgroundPosition: '0 0, 30px 30px, 0 0, 0 0',
-                    boxShadow: '0 2px 8px rgba(180, 140, 120, 0.1), inset 0 0 50px rgba(255, 248, 241, 0.8)'
+                    background: 'transparent',
+                    boxShadow: 'none'
                 }}>
                     <div className="playlist-header" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px'}}>
                         <div className="header-title" style={{fontWeight: 'bold', fontSize: '1.2rem'}}>{playlistTitle}</div>
