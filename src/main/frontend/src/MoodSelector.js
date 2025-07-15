@@ -130,11 +130,6 @@ function MoodSelector({ selectedDate, onClose, onMoodSelect, plusButtonRef }) {
             <div className="mood-emoji">{mood.emoji}</div>
           </div>
         ))}
-
-        {/* 변경 힌트 */}
-        <div className="inline-change-hint">
-          {currentSet === 0 ? '긍정적인 감정들 → 부정적인 감정 보기' : '부정적인 감정들 → 긍정적인 감정 보기'}
-        </div>
       </div>
     </>
   );

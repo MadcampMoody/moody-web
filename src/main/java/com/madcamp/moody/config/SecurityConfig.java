@@ -25,6 +25,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import com.madcamp.moody.user.User;
 import com.madcamp.moody.user.UserRepository;
 import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 
 @Configuration
 @EnableWebSecurity
@@ -40,26 +42,26 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http, OAuth2UserServiceRouter oAuth2UserServiceRouter) throws Exception {
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .csrf(csrf -> csrf.disable()) // CSRF 보호 비활성화
+            // CSRF 보호를 API 경로에 대해 비활성화
+            .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**"))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/", "/login", "/css/**", "/js/**", "/images/**", "/error", "/favicon.ico").permitAll()
-                .requestMatchers("/api/auth/check", "/api/auth/user").authenticated() // 인증 확인 및 사용자 정보는 인증 필요
-                .requestMatchers("/api/**").authenticated() // 나머지 API도 인증 필요
-                .anyRequest().permitAll() // 나머지 요청은 허용 (React 라우팅 등)
+                .requestMatchers("/api/**").authenticated()
+                .anyRequest().permitAll()
             )
             .exceptionHandling(e -> e
-                .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)) // 인증되지 않은 API 요청에 401 반환
+                .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
             )
             .oauth2Login(oauth2 -> oauth2
                 .userInfoEndpoint(userInfo -> userInfo
                     .userService(oAuth2UserServiceRouter)
                 )
-                .successHandler(authenticationSuccessHandler()) // 수정된 successHandler 사용
-                .failureUrl("http://localhost:3000/?error=true")
+                .successHandler(authenticationSuccessHandler())
+                .failureUrl("http://127.0.0.1:3000/?error=true")
             )
             .logout(logout -> logout
                 .logoutUrl("/logout")
-                .logoutSuccessUrl("http://localhost:3000/")
+                .logoutSuccessUrl("http://127.0.0.1:3000/")
                 .invalidateHttpSession(true)
                 .clearAuthentication(true)
                 .deleteCookies("JSESSIONID")
@@ -75,30 +77,27 @@ public class SecurityConfig {
             OAuth2User oauth2User = (OAuth2User) authentication.getPrincipal();
             String oauthId = oauth2User.getAttribute("id").toString();
             
-            // DB에서 사용자 정보 조회
             User user = userRepository.findByOauthId(oauthId);
             
             String redirectUrl;
             if (user != null && user.isOnboardingCompleted()) {
-                // 온보딩 완료 사용자 -> 대시보드
-                redirectUrl = "http://localhost:3000/dashboard";
+                redirectUrl = "http://127.0.0.1:3000/dashboard";
             } else {
-                // 신규 또는 온보딩 미완료 사용자 -> 온보딩 페이지
-                redirectUrl = "http://localhost:3000/onboarding";
+                redirectUrl = "http://127.0.0.1:3000/onboarding";
             }
             
             response.sendRedirect(redirectUrl);
         };
     }
-
+    
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Collections.singletonList("http://localhost:3000")); // 특정 출처 명시
+        configuration.setAllowedOrigins(Collections.singletonList("http://127.0.0.1:3000")); // 127.0.0.1로 통일
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
-        configuration.setMaxAge(3600L); // pre-flight 요청 캐시 시간 설정
+        configuration.setMaxAge(3600L);
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
