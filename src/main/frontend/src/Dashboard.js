@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import MoodTracker from "./MoodTracker";
-import TopBar from "./components/TopBar";
 import "./Dashboard.css";
 
 function Dashboard() {
@@ -82,7 +81,6 @@ function Dashboard() {
 
   return (
     <div className="dashboard-container">
-      <TopBar />
       <div className="page-content">
         <MoodTracker />
       </div>
