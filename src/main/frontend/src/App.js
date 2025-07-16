@@ -6,12 +6,18 @@ import Dashboard from "./Dashboard";
 import MusicRecommendPage from "./components/MusicRecommendPage";
 import DiaryEditorWrapper from "./DiaryEditorWrapper";
 import TopBar from "./components/TopBar";
+import { SpotifyProvider } from "./contexts/SpotifyContext";
 
 function App() {
   return (
-    <Router>
-      <AppRoutes />
-    </Router>
+    <SpotifyProvider>
+      <Router>
+        <div className="App">
+          <TopBar />
+          <AppRoutes />
+        </div>
+      </Router>
+    </SpotifyProvider>
   );
 }
 
@@ -29,9 +35,8 @@ function AppRoutes() {
   };
 
   return (
-    <div className="App">
-      {/* /, /onboarding에서는 TopBar 숨김 */}
-      {location.pathname !== '/' && location.pathname !== '/onboarding' && <TopBar />}
+    <>
+      {/* /, /onboarding에서는 TopBar 숨김 -> 이 로직 제거 */}
       <Routes>
         <Route path="/" element={
           <div className="App login-bg">
@@ -63,7 +68,7 @@ function AppRoutes() {
         <Route path="/diary/:date" element={<DiaryEditorWrapper />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </div>
+    </>
   );
 }
 

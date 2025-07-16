@@ -1,7 +1,20 @@
 import axios from "axios";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useContext } from "react"; // useContext 추가
 import TopBar from "./components/TopBar";
 import "./DiaryEditor.css";
+import { SpotifyContext } from "./contexts/SpotifyContext"; // SpotifyContext import
+
+const HeartIcon = ({ className, onClick }) => (
+  <svg className={className} onClick={onClick} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+  </svg>
+);
+
+const FilledHeartIcon = ({ className, onClick }) => (
+  <svg className={className} onClick={onClick} width="24" height="24" viewBox="0 0 24 24" fill="#ff4500" stroke="#ff4500" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+  </svg>
+);
 
 function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, onCancel }) {
   const [content, setContent] = useState(initialContent);
@@ -16,6 +29,10 @@ function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, o
   const [error, setError] = useState(null);
   const [userName, setUserName] = useState('사용자');
   const playlistRef = useRef(null);
+  const [likedTracks, setLikedTracks] = useState({});
+
+  // Spotify Context 사용
+  const { accessToken, player, isSpotifyLoggedIn } = useContext(SpotifyContext);
 
   // 외부 클릭 시 dropdown 닫기
   useEffect(() => {
@@ -158,6 +175,75 @@ function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, o
     }
   };
 
+  const handleLike = (trackId) => {
+    setLikedTracks(prev => ({
+      ...prev,
+      [trackId]: !prev[trackId]
+    }));
+  };
+
+  const handleAddToQueue = async (track) => {
+    if (!isSpotifyLoggedIn || !accessToken) {
+      alert("Spotify 로그인이 필요합니다.");
+      return;
+    }
+    if (!track.spotifyUrl) {
+      alert("유효하지 않은 곡입니다.");
+      return;
+    }
+    const trackUri = `spotify:track:${track.spotifyUrl.split('/track/')[1]}`;
+    try {
+      const response = await fetch(`https://api.spotify.com/v1/me/player/queue?uri=${encodeURIComponent(trackUri)}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+        },
+      });
+
+      if (response.ok) {
+        alert(`'${track.title}'을(를) 재생목록에 추가했습니다.`);
+      } else {
+        const errorData = await response.json();
+        alert(`큐에 추가 실패: ${errorData.error.message}`);
+      }
+    } catch (e) {
+      alert("큐에 추가하는 중 오류 발생");
+    }
+  };
+
+  // 전체 플레이리스트를 큐에 추가하는 함수
+  const handleAddPlaylistToQueue = async () => {
+    if (!isSpotifyLoggedIn || !accessToken) {
+      alert("Spotify 로그인이 필요합니다.");
+      return;
+    }
+    if (recommendedTracks.length === 0) {
+      alert("추가할 곡이 없습니다.");
+      return;
+    }
+
+    let successCount = 0;
+    for (const track of recommendedTracks) {
+      if (!track.spotifyUrl) continue;
+      const trackUri = `spotify:track:${track.spotifyUrl.split('/track/')[1]}`;
+      try {
+        const response = await fetch(`https://api.spotify.com/v1/me/player/queue?uri=${encodeURIComponent(trackUri)}`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+          },
+        });
+        if (response.ok) {
+          successCount++;
+        }
+      } catch (e) {
+        // 개별 곡 추가 실패는 무시하고 계속 진행
+        console.error("큐에 곡 추가 중 오류:", e);
+      }
+    }
+    alert(`${successCount}곡을 재생목록에 추가했습니다.`);
+  };
+
   return (
     <div>
       <TopBar />
@@ -253,32 +339,30 @@ function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, o
                     backgroundPosition: '0 0, 30px 30px, 0 0, 0 0',
                     boxShadow: '0 2px 8px rgba(180, 140, 120, 0.1), inset 0 0 50px rgba(255, 248, 241, 0.8)'
                 }}>
-                    <div className="playlist-header" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px'}}>
-                        <div className="header-title" style={{fontWeight: 'bold', fontSize: '1.2rem'}}>{playlistTitle}</div>
-                        <div className="spotify-link">
-                            <a 
-                              href="https://open.spotify.com" 
-                              target="_blank" 
-                              rel="noopener noreferrer" 
-                              style={{
-                                backgroundColor: '#1DB954',
-                                color: 'white',
-                                padding: '8px 16px',
-                                borderRadius: '50px',
-                                textDecoration: 'none',
-                                display: 'flex',
-                                alignItems: 'center',
-                                fontWeight: 'bold',
-                                fontSize: '0.9rem'
-                              }}
-                            >
-                                Spotify에서 듣기
-                                <img src="/spotify-logo.svg" alt="Spotify" style={{width: '40px', marginLeft: '8px'}}/>
-                            </a>
-                        </div>
-                    </div>
-                    <div className="playlist-body">
-                        {recommendedTracks.map((track, index) => (
+                  <div className="playlist-header">
+                    <h3>{playlistTitle}</h3>
+                    <button
+                      onClick={handleAddPlaylistToQueue}
+                      style={{
+                        backgroundColor: '#1DB954',
+                        color: 'white',
+                        padding: '8px 16px',
+                        borderRadius: '50px',
+                        textDecoration: 'none',
+                        display: 'flex',
+                        alignItems: 'center',
+                        fontWeight: 'bold',
+                        fontSize: '0.9rem',
+                        border: 'none',
+                        cursor: 'pointer'
+                      }}
+                    >
+                       Spotify에서 듣기
+                       <img src="/spotify-logo.svg" alt="Spotify" style={{width: '40px', marginLeft: '8px'}}/>
+                    </button>
+                  </div>
+                  <ul className="playlist-list">
+                    {recommendedTracks.map((track, index) => (
                             <div key={track.trackId || index} className="playlist-track" style={{display: 'flex', alignItems: 'center', marginBottom: '10px'}}>
                                 <span style={{marginRight: '15px', fontWeight: 'bold', fontSize: '1.1rem', minWidth: '20px', textAlign: 'center'}}>{index + 1}</span>
                                 <div style={{width: '100%'}}>
@@ -295,7 +379,7 @@ function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, o
                                 </div>
                             </div>
                         ))}
-                    </div>
+                    </ul>
                 </div>
             </div>
         )}
