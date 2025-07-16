@@ -51,8 +51,8 @@ const TopBar = () => {
       </div>
       
       <div className="top-bar-right">
-        {/* Spotify 로그인이 되어있고, 루트 경로가 아닐 때만 플레이어 표시 */}
-        {!loading && isSpotifyLoggedIn && location.pathname !== '/' && <SpotifyPlayer />}
+        {/* Spotify 로그인이 되어있고, 루트 및 온보딩 경로가 아닐 때만 플레이어 표시 */}
+        {!loading && isSpotifyLoggedIn && location.pathname !== '/' && location.pathname !== '/onboarding' && <SpotifyPlayer />}
         
         {/* Spotify 로그인이 안되어있을 때만 로그인 버튼 표시 */}
         {!loading && !isSpotifyLoggedIn && (
@@ -68,7 +68,8 @@ const TopBar = () => {
           </div>
         )}
         
-        {isSpotifyLoggedIn && location.pathname !== '/' && (
+        {/* 로그인 되어있고, 루트 및 온보딩 경로가 아닐 때만 로그아웃 버튼 표시 */}
+        {isSpotifyLoggedIn && location.pathname !== '/' && location.pathname !== '/onboarding' && (
           <button className="logout-btn" onClick={handleLogout}>
             로그아웃
           </button>
