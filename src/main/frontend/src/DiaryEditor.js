@@ -304,6 +304,7 @@ function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, o
         value={content}
         onChange={(e) => setContent(e.target.value)}
         rows={8}
+        readOnly={!!(diary && diary.content)}
       />
 
         {error && <p className="error-message" style={{color: 'red', marginTop: '20px', textAlign: 'center'}}>{error}</p>}
