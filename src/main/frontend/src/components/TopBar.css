@@ -19,20 +19,14 @@
   align-items: center;
 }
 
-.logo-button {
-  background-color: #c4c4c4;
-  border: none;
-  border-radius: 25px;
-  padding: 8px 16px;
-  font-size: 14px;
-  font-weight: 500;
-  color: #333;
+.logo-image {
+  height: 50px; /* 로고 크기 조정 */
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: transform 0.2s ease;
 }
 
-.logo-button:hover {
-  background-color: #b0b0b0;
+.logo-image:hover {
+  transform: scale(1.05); /* 호버 시 약간 확대 */
 }
 
 .spotify-login-btn {
@@ -71,21 +65,16 @@
   cursor: default;
 }
 
-.profile-btn {
-  background-color: #c4c4c4;
-  border: none;
-  border-radius: 25px;
-  padding: 8px 16px;
-  font-size: 14px;
-  font-weight: 500;
-  color: #333;
+.profile-image {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
   cursor: pointer;
-  transition: background-color 0.2s ease;
-  white-space: nowrap; /* 텍스트가 줄바꿈되지 않도록 */
+  transition: transform 0.2s ease;
 }
 
-.profile-btn:hover {
-  background-color: #b0b0b0;
+.profile-image:hover {
+  transform: scale(1.05);
 }
 
 .top-bar-right {

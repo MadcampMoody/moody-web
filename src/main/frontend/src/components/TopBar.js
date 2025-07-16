@@ -74,9 +74,12 @@ const TopBar = () => {
   return (
     <div className="top-bar">
       <div className="top-bar-left">
-        <button className="logo-button" onClick={handleLogoClick}>
-          무디 요요
-        </button>
+        <img
+          src="/moody_logo.png"
+          alt="Moody Logo"
+          className="logo-image"
+          onClick={handleLogoClick}
+        />
       </div>
       
       <div className="top-bar-right">
@@ -97,9 +100,12 @@ const TopBar = () => {
           </div>
         )}
         
-        <button className="profile-btn" onClick={handleProfile}>
-          내 프로필
-        </button>
+        <img
+          src="/account.png"
+          alt="My Profile"
+          className="profile-image"
+          onClick={handleProfile}
+        />
       </div>
     </div>
   );
