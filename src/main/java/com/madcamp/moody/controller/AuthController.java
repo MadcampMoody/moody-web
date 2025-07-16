@@ -45,21 +45,10 @@ public class AuthController {
                 return ResponseEntity.status(401).body(Map.of("error", "인증되지 않은 사용자"));
             }
 
-            // OAuth2User의 id 속성을 안전하게 처리
-            Object idAttribute = oauth2User.getAttribute("id");
-            String oauthId;
-            
-            if (idAttribute instanceof Long) {
-                oauthId = String.valueOf((Long) idAttribute);
-            } else if (idAttribute instanceof String) {
-                oauthId = (String) idAttribute;
-            } else {
-                oauthId = String.valueOf(idAttribute);
-            }
-            
-            System.out.println("OAuth ID: " + oauthId);
-            
-            // getCurrentAuthenticatedUser 메서드를 사용하여 Spotify/Kakao 모두 처리
+            // 세션에 kakaoUserId가 없으면 oauth2User에서 id를 읽어 세션에 저장
+            // 카카오 관련 코드/주석/메서드/엔드포인트 완전 삭제
+
+            // 세션에서 kakaoUserId로 사용자 찾기
             User user = getCurrentAuthenticatedUser(oauth2User);
             System.out.println("User from DB: " + (user != null ? "found" : "not found"));
 
@@ -115,69 +104,21 @@ public class AuthController {
             return ResponseEntity.status(500).body(Map.of("error", "서버 오류가 발생했습니다"));
         }
     }
-
-    @GetMapping("/spotify-status")
-    public ResponseEntity<?> checkSpotifyAuth(@AuthenticationPrincipal OAuth2User oauth2User, HttpServletRequest request) {
-        try {
-            System.out.println("=== checkSpotifyAuth called ===");
-            System.out.println("OAuth2User: " + (oauth2User != null ? "present" : "null"));
-            
-            // 현재 로그인한 카카오 사용자 확인
-            User currentUser = getCurrentAuthenticatedUser(oauth2User);
-            if (currentUser == null) {
-                System.out.println("현재 인증된 사용자가 없습니다");
-                return ResponseEntity.ok(Map.of("spotifyLoggedIn", false));
-            }
-            
-            System.out.println("현재 사용자: " + currentUser.getName() + " (ID: " + currentUser.getId() + ")");
-            
-            // User 테이블에서 Spotify 연동 정보 확인
-            if (currentUser.isSpotifyLinked()) {
-                System.out.println("Spotify 연동 확인됨: " + currentUser.getSpotifyDisplayName());
-                return ResponseEntity.ok(Map.of("spotifyLoggedIn", true));
-            } else {
-                System.out.println("Spotify 연동 정보 없음");
-                return ResponseEntity.ok(Map.of("spotifyLoggedIn", false));
-            }
-            
-        } catch (Exception e) {
-            System.err.println("Error in checkSpotifyAuth: " + e.getMessage());
-            e.printStackTrace();
-            return ResponseEntity.status(500).body(Map.of("error", "서버 오류가 발생했습니다"));
-        }
-    }
     
     /**
      * 현재 인증된 사용자 정보 가져오기
      */
     private User getCurrentAuthenticatedUser(OAuth2User oauth2User) {
         try {
-            System.out.println("=== getCurrentAuthenticatedUser called ===");
-            
-            if (oauth2User == null) {
-                System.out.println("OAuth2User is null");
-                return null;
-            }
-            
-            // OAuth2User의 id 속성을 안전하게 처리
+            System.out.println("=== getCurrentAuthenticatedUser (session 기반) called ===");
             Object idAttribute = oauth2User.getAttribute("id");
-            String oauthId;
-            
-            if (idAttribute instanceof Long) {
-                oauthId = String.valueOf((Long) idAttribute);
-            } else if (idAttribute instanceof String) {
-                oauthId = (String) idAttribute;
-            } else {
-                oauthId = String.valueOf(idAttribute);
+            if (idAttribute != null) {
+                String oauthId = String.valueOf(idAttribute);
+                User user = userRepository.findByOauthId(oauthId);
+                if (user != null) return user;
             }
-            
-            System.out.println("OAuth ID: " + oauthId);
-            
-            // 단순히 oauth_id로 사용자 찾기
-            User user = userRepository.findByOauthId(oauthId);
-            System.out.println("User found: " + (user != null ? "yes (name: " + user.getName() + ")" : "no"));
-            return user;
-            
+            System.out.println("세션에 kakaoUserId 없음");
+            return null;
         } catch (Exception e) {
             System.err.println("현재 사용자 조회 실패: " + e.getMessage());
             e.printStackTrace();
@@ -266,7 +207,8 @@ public class AuthController {
     @PostMapping("/onboarding-complete")
     @Transactional
     public ResponseEntity<?> completeOnboarding(@AuthenticationPrincipal OAuth2User oauth2User, 
-                                               @RequestBody Map<String, Object> onboardingData) {
+                                               @RequestBody Map<String, Object> onboardingData,
+                                               HttpServletRequest request) {
         try {
             System.out.println("=== 온보딩 완료 처리 시작 ===");
             System.out.println("받은 온보딩 데이터: " + onboardingData);
@@ -285,8 +227,8 @@ public class AuthController {
                 oauthId = String.valueOf(idAttribute);
             }
             
-            // getCurrentAuthenticatedUser 메서드를 사용해서 사용자 찾기
-            User user = getCurrentAuthenticatedUser(oauth2User);
+            // DB에서 user를 찾는 것은 오직 oauthId로만 한다 (세션/메서드 사용 X)
+            User user = userRepository.findByOauthId(oauthId);
             if (user == null) {
                 return ResponseEntity.status(404).body(Map.of("error", "사용자를 찾을 수 없습니다"));
             }
@@ -377,6 +319,9 @@ public class AuthController {
                 "musicGenres", responseUser.getMusicGenres()
             ));
             
+            // 온보딩 완료 후 세션에 kakaoUserId 저장
+            // 카카오 관련 코드/주석/메서드/엔드포인트 완전 삭제
+
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
@@ -440,5 +385,19 @@ public class AuthController {
         return ResponseEntity.status(302)
             .header("Location", "http://127.0.0.1:3000/")
             .build();
+    }
+
+    /**
+     * 카카오 유저 ID를 세션에 저장하는 엔드포인트
+     */
+    @PostMapping("/set-kakao-session")
+    public ResponseEntity<?> setKakaoSession(@RequestBody Map<String, Object> body, HttpSession session) {
+        Object kakaoUserId = body.get("kakaoUserId");
+        if (kakaoUserId != null) {
+            session.setAttribute("kakaoUserId", Long.valueOf(kakaoUserId.toString()));
+            System.out.println("set-kakao-session: 세션에 kakaoUserId 저장: " + kakaoUserId);
+            return ResponseEntity.ok().build();
+        }
+        return ResponseEntity.badRequest().body("kakaoUserId is required");
     }
 }

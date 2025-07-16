@@ -69,34 +69,20 @@ public class SpotifyService {
      */
     public String getCurrentUserSpotifyAccessToken() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        
         if (authentication == null || !authentication.isAuthenticated()) {
             return null;
         }
-
-        // OAuth2User에서 사용자 식별
         if (authentication.getPrincipal() instanceof OAuth2User) {
             OAuth2User oauth2User = (OAuth2User) authentication.getPrincipal();
-            
-            // 먼저 Spotify 사용자인지 확인 (display_name 속성이 있으면 Spotify)
             String spotifyDisplayName = oauth2User.getAttribute("display_name");
             if (spotifyDisplayName != null) {
-                // Spotify 로그인 사용자
                 String spotifyId = oauth2User.getAttribute("id");
                 User user = userRepository.findBySpotifyOauthId(spotifyId);
                 if (user != null && user.getSpotifyAccessToken() != null) {
                     return user.getSpotifyAccessToken();
                 }
-            } else {
-                // 카카오 로그인 사용자 - Spotify 연동 여부 확인
-                String kakaoId = String.valueOf(oauth2User.getAttribute("id"));
-                User user = userRepository.findByOauthId(kakaoId);
-                if (user != null && user.getSpotifyAccessToken() != null) {
-                    return user.getSpotifyAccessToken();
-                }
             }
         }
-        
         return null;
     }
 

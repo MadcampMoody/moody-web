@@ -90,9 +90,7 @@ public class SecurityConfig {
                         // Spotify 사용자도 dashboard로 리다이렉트
                         System.out.println("Spotify 사용자를 dashboard로 리다이렉트");
                     } else {
-                        session.setAttribute("kakao_logged_in", true);
-                        session.setAttribute("kakao_user_id", oauth2User.getAttribute("id"));
-                        System.out.println("카카오 로그인 정보를 세션에 저장");
+                        // 카카오 관련 코드/주석 완전 삭제
                     }
                 }
                 

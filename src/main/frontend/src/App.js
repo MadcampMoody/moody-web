@@ -1,79 +1,69 @@
 import { useEffect, useState } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import "./App.css";
 import Onboarding from "./Onboarding";
 import Dashboard from "./Dashboard";
 import MusicRecommendPage from "./components/MusicRecommendPage";
 import DiaryEditorWrapper from "./DiaryEditorWrapper";
-
+import TopBar from "./components/TopBar";
 
 function App() {
-  const [error, setError] = useState('');
+  return (
+    <Router>
+      <AppRoutes />
+    </Router>
+  );
+}
 
+function AppRoutes() {
+  const location = useLocation();
+  const [showSpotify, setShowSpotify] = useState(false);
   useEffect(() => {
-    // URL 파라미터에서 에러 확인
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('error') === 'true') {
-      setError('카카오 로그인에 실패했습니다. 다시 시도해주세요.');
-    }
+    const timer = setTimeout(() => setShowSpotify(true), 1000);
+    return () => clearTimeout(timer);
   }, []);
-
-  const handleKakaoLogin = () => {
-    // 에러 메시지 초기화
-    setError('');
-    // 카카오 OAuth2 로그인 URL로 리다이렉트
-    window.location.href = 'http://127.0.0.1:8080/oauth2/authorization/kakao';
-  };
-
-  // 메인 페이지 (로그인 페이지)
-  const LoginPage = () => {
-    const [showKakao, setShowKakao] = useState(false);
-    useEffect(() => {
-      const timer = setTimeout(() => setShowKakao(true), 1000);
-      return () => clearTimeout(timer);
-    }, []);
-    return (
-      <div className="App login-bg">
-        <div className="login-card">
-          <div className="logo-section">
-            <img 
-              src="/moody_logo.png" 
-              alt="Moody Logo" 
-              className="moody-logo"
-            />
-          </div>
-          <h1 className="service-title">moody</h1>
-          <p className="service-desc">오늘의 감정을 기록하고, 나를 더 잘 이해해보세요</p>
-          <div className="login-section">
-            {error && (
-              <div className="error-message">
-                {error}
-              </div>
-            )}
-            <button 
-              className={`kakao-login-btn fade-in-btn${showKakao ? ' visible' : ''}`}
-              onClick={handleKakaoLogin}
-              disabled={!showKakao}
-            >
-              카카오 로그인하기
-            </button>
-          </div>
-        </div>
-      </div>
-    );
+  // 카카오 관련 변수/함수/에러 메시지 삭제
+  // Spotify 로그인 버튼만 남김
+  const handleSpotifyLogin = () => {
+    window.location.href = 'http://127.0.0.1:8080/oauth2/authorization/spotify';
   };
 
   return (
-    <Router>
+    <div className="App">
+      {/* /, /onboarding에서는 TopBar 숨김 */}
+      {location.pathname !== '/' && location.pathname !== '/onboarding' && <TopBar />}
       <Routes>
-        <Route path="/" element={<LoginPage />} />
+        <Route path="/" element={
+          <div className="App login-bg">
+            <div className="login-card">
+              <div className="logo-section">
+                <img 
+                  src="/moody_logo.png" 
+                  alt="Moody Logo" 
+                  className="moody-logo"
+                />
+              </div>
+              <h1 className="service-title">moody</h1>
+              <p className="service-desc">오늘의 감정을 기록하고, 나를 더 잘 이해해보세요</p>
+              <div className="login-section">
+                <button 
+                  className={`spotify-login-btn fade-in-btn${showSpotify ? ' visible' : ''}`}
+                  onClick={handleSpotifyLogin}
+                  disabled={!showSpotify}
+                >
+                  Spotify로 로그인하기
+                </button>
+              </div>
+            </div>
+          </div>
+        } />
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/music_recommend" element={<MusicRecommendPage />} />
         <Route path="/diary/:date" element={<DiaryEditorWrapper />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </Router>
+    </div>
   );
 }
 

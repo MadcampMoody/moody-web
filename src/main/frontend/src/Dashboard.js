@@ -32,9 +32,6 @@ function Dashboard() {
       if (response.ok) {
         const user = await response.json();
         setUserData(user);
-        
-
-        
         // 신규 회원인지 확인
         if (user.isNewUser) {
           console.log('New user detected, checking onboarding status');

@@ -6,6 +6,11 @@ import org.springframework.web.bind.annotation.*;
 
 import com.madcamp.moody.spotify.SpotifyService;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.ServletException;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -19,7 +24,7 @@ public class SpotifyController {
 
     /**
      * Spotify Web Playback SDK용 액세스 토큰 제공
-     * 카카오 인증과 완전히 분리된 Spotify 전용 API
+     * Spotify 전용 API
      */
     @GetMapping("/access-token")
     public ResponseEntity<Map<String, Object>> getSpotifyAccessToken() {
@@ -119,5 +124,35 @@ public class SpotifyController {
             response.put("error", "재생 제어 중 오류가 발생했습니다: " + e.getMessage());
             return ResponseEntity.internalServerError().body(response);
         }
+    }
+
+    /**
+     * Spotify OAuth2 콜백에서 spotifyUserId를 세션에 저장
+     * (Spring Security가 처리하기 전에 세션에 spotifyUserId를 넣어주기 위함)
+     */
+    @GetMapping("/callback")
+    public void spotifyCallback(HttpServletRequest request, HttpServletResponse response, HttpSession session) throws IOException, ServletException {
+        // 기존: String kakaoUserId = request.getParameter("kakaoUserId");
+        // 수정: 스포티파이 id를 읽어서 저장
+        String spotifyUserId = request.getParameter("spotifyUserId");
+        if (spotifyUserId == null) {
+            // 혹시 파라미터명이 id로 오는 경우도 대비
+            spotifyUserId = request.getParameter("id");
+        }
+        if (spotifyUserId != null) {
+            session.setAttribute("spotifyUserId", spotifyUserId);
+            System.out.println("callback에서 spotifyUserId 세션 저장: " + spotifyUserId);
+        }
+        // Spring Security 기본 콜백 URL로 리다이렉트
+        String code = request.getParameter("code");
+        String state = request.getParameter("state");
+        String redirectUrl = "/login/oauth2/code/spotify";
+        if (code != null) {
+            redirectUrl += "?code=" + code;
+            if (state != null) {
+                redirectUrl += "&state=" + state;
+            }
+        }
+        request.getRequestDispatcher(redirectUrl).forward(request, response);
     }
 } 

@@ -64,44 +64,6 @@
   width: 100%;
 }
 
-.kakao-login-btn {
-  background-color: #FEE500;
-  color: #222;
-  border: none;
-  padding: 22px 0;
-  border-radius: 16px;
-  font-size: 1.45rem;
-  font-weight: 800;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(.4,2,.6,1);
-  box-shadow: 0 6px 24px rgba(254, 229, 0, 0.18);
-  min-width: 320px;
-  opacity: 0;
-  pointer-events: none;
-  letter-spacing: 0.5px;
-}
-
-.kakao-login-btn.visible {
-  opacity: 1;
-  pointer-events: auto;
-  animation: fadeInBtn 0.5s cubic-bezier(.4,2,.6,1);
-}
-
-@keyframes fadeInBtn {
-  from { opacity: 0; transform: translateY(30px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.kakao-login-btn:hover:enabled {
-  background-color: #FFD700;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 28px rgba(254, 229, 0, 0.22);
-}
-
-.kakao-login-btn:active {
-  transform: translateY(0);
-}
-
 .error-message {
   background-color: #ffebee;
   color: #c62828;
@@ -213,10 +175,52 @@ a:hover {
   .service-desc {
     font-size: 1.05rem;
   }
-  .kakao-login-btn {
-    font-size: 1.05rem;
-    min-width: 180px;
-    padding: 14px 0;
-    border-radius: 10px;
+}
+
+.spotify-login-btn {
+  background-color: #1db954;
+  color: #fff;
+  border: none;
+  padding: 32px 0;
+  border-radius: 20px;
+  font-size: 1rem;
+  font-weight: 900;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(.4,2,.6,1);
+  box-shadow: 0 8px 32px rgba(30, 215, 96, 0.22);
+  min-width: 380px;
+  min-height: 60px;
+  opacity: 0;
+  pointer-events: none;
+  letter-spacing: 0.5px;
+}
+
+.spotify-login-btn.fade-in-btn.visible {
+  opacity: 1;
+  pointer-events: auto;
+  animation: fadeInBtn 0.5s cubic-bezier(.4,2,.6,1);
+}
+
+@keyframes fadeInBtn {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.spotify-login-btn:hover:enabled {
+  background-color: #1ed760;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(30, 215, 96, 0.22);
+}
+
+.spotify-login-btn:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 700px) {
+  .spotify-login-btn {
+    font-size: 1.5rem;
+    min-width: 220px;
+    padding: 18px 0;
+    border-radius: 12px;
   }
 }

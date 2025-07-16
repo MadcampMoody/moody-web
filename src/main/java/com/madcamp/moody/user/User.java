@@ -27,7 +27,7 @@ public class User extends BaseEntity {
     private String email;
 
     @Column(name = "oauth_id", nullable = false)
-    private String oauthId;
+    private String oauthId; // Spotify ID만 사용
     
     @Enumerated(EnumType.STRING)
     @Column(name = "music_region")
@@ -39,6 +39,21 @@ public class User extends BaseEntity {
     @Column(name = "onboarding_completed", nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
     private boolean onboardingCompleted = false;
     
+    @Column(name = "spotify_oauth_id")
+    private String spotifyOauthId;
+
+    @Column(name = "spotify_email")
+    private String spotifyEmail;
+
+    @Column(name = "spotify_access_token", columnDefinition = "TEXT")
+    private String spotifyAccessToken;
+
+    @Column(name = "spotify_refresh_token", columnDefinition = "TEXT")
+    private String spotifyRefreshToken;
+    
+    @Column(name = "spotify_display_name")
+    private String spotifyDisplayName;
+
     // 명시적인 getter/setter 추가
     public boolean isOnboardingCompleted() {
         return onboardingCompleted;
@@ -48,25 +63,36 @@ public class User extends BaseEntity {
         this.onboardingCompleted = onboardingCompleted;
     }
     
-    // Spotify 관련 필드들
-    @Column(name = "spotify_oauth_id")
-    private String spotifyOauthId;
-    
-    @Column(name = "spotify_email")
-    private String spotifyEmail;
-    
-    @Column(name = "spotify_display_name")
-    private String spotifyDisplayName;
-    
-    @Column(name = "spotify_access_token", columnDefinition = "TEXT")
-    private String spotifyAccessToken;
-    
-    @Column(name = "spotify_refresh_token", columnDefinition = "TEXT")
-    private String spotifyRefreshToken;
-    
-    // Spotify 연동 여부 확인 헬퍼 메서드
-    public boolean isSpotifyLinked() {
-        return spotifyOauthId != null && !spotifyOauthId.isEmpty();
+    public String getSpotifyOauthId() {
+        return spotifyOauthId;
+    }
+    public void setSpotifyOauthId(String spotifyOauthId) {
+        this.spotifyOauthId = spotifyOauthId;
+    }
+    public String getSpotifyEmail() {
+        return spotifyEmail;
+    }
+    public void setSpotifyEmail(String spotifyEmail) {
+        this.spotifyEmail = spotifyEmail;
+    }
+    public String getSpotifyAccessToken() {
+        return spotifyAccessToken;
+    }
+    public void setSpotifyAccessToken(String spotifyAccessToken) {
+        this.spotifyAccessToken = spotifyAccessToken;
+    }
+    public String getSpotifyRefreshToken() {
+        return spotifyRefreshToken;
+    }
+    public void setSpotifyRefreshToken(String spotifyRefreshToken) {
+        this.spotifyRefreshToken = spotifyRefreshToken;
+    }
+
+    public String getSpotifyDisplayName() {
+        return spotifyDisplayName;
+    }
+    public void setSpotifyDisplayName(String spotifyDisplayName) {
+        this.spotifyDisplayName = spotifyDisplayName;
     }
     
     // 음악 장르 목록을 가져오는 헬퍼 메서드

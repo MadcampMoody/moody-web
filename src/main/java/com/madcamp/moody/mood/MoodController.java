@@ -45,13 +45,8 @@ public class MoodController {
             // Spotify 사용자인지 확인 (display_name 속성이 있으면 Spotify)
             String spotifyDisplayName = oauth2User.getAttribute("display_name");
             if (spotifyDisplayName != null) {
-                // Spotify 로그인 사용자
                 String spotifyId = oauth2User.getAttribute("id");
                 user = userRepository.findBySpotifyOauthId(spotifyId);
-            } else {
-                // 카카오 로그인 사용자
-                String kakaoId = oauth2User.getAttribute("id").toString();
-                user = userRepository.findByOauthId(kakaoId);
             }
             
             if (user == null) {
@@ -94,13 +89,8 @@ public class MoodController {
             // Spotify 사용자인지 확인 (display_name 속성이 있으면 Spotify)
             String spotifyDisplayName = oauth2User.getAttribute("display_name");
             if (spotifyDisplayName != null) {
-                // Spotify 로그인 사용자
                 String spotifyId = oauth2User.getAttribute("id");
                 user = userRepository.findBySpotifyOauthId(spotifyId);
-            } else {
-                // 카카오 로그인 사용자
-                String kakaoId = oauth2User.getAttribute("id").toString();
-                user = userRepository.findByOauthId(kakaoId);
             }
 
             if (user == null) {
@@ -145,13 +135,8 @@ public class MoodController {
             // Spotify 사용자인지 확인 (display_name 속성이 있으면 Spotify)
             String spotifyDisplayName = oauth2User.getAttribute("display_name");
             if (spotifyDisplayName != null) {
-                // Spotify 로그인 사용자
                 String spotifyId = oauth2User.getAttribute("id");
                 user = userRepository.findBySpotifyOauthId(spotifyId);
-            } else {
-                // 카카오 로그인 사용자
-                String kakaoId = oauth2User.getAttribute("id").toString();
-                user = userRepository.findByOauthId(kakaoId);
             }
 
             if (user == null) {
