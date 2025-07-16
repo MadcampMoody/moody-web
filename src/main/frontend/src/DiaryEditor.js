@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef, useContext } from "react"; // useCo
 import TopBar from "./components/TopBar";
 import "./DiaryEditor.css";
 import { SpotifyContext } from "./contexts/SpotifyContext"; // SpotifyContext import
+import checkIcon from './assets/check.png'; // 아이콘 import
 
 const HeartIcon = ({ className, onClick }) => (
   <svg className={className} onClick={onClick} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -297,21 +298,22 @@ function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, o
           </div>
         )}
       </div>
-          <textarea
-            className="diary-textarea"
-            placeholder="오늘의 일기를 작성해보세요..."
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            rows={8}
-          />
-          <div className="diary-actions">
-            <button className="diary-save-btn" onClick={handleSave} disabled={loading}>
-              {loading ? '추천받는 중...' : '저장 및 음악 추천받기'}
-            </button>
-            <button className="diary-cancel-btn" onClick={onCancel} disabled={loading}>
-              취소
-            </button>
-          </div>
+
+      {content && (
+        <div className="diary-actions">
+          <button className="diary-save-btn" onClick={handleSave} disabled={loading}>
+            {loading ? <div className="loader"></div> : <img src={checkIcon} alt="Save" />}
+          </button>
+        </div>
+      )}
+
+      <textarea
+        className="diary-textarea"
+        placeholder="오늘의 일기를 작성해보세요..."
+        value={content}
+        onChange={(e) => setContent(e.target.value)}
+        rows={8}
+      />
 
         {error && <p className="error-message" style={{color: 'red', marginTop: '20px', textAlign: 'center'}}>{error}</p>}
 

@@ -179,7 +179,8 @@
 .calendar-days {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
+  row-gap: 10px; /* Increased vertical spacing */
+  column-gap: 4px; /* Kept original horizontal spacing */
   flex: 1;
 }
 

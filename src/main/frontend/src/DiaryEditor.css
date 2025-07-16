@@ -33,7 +33,7 @@ body, html {
   }
   
   .diary-main-paper {
-    max-width: 800px;
+    max-width: 1200px; /* Increased from 800px */
     width: 100%;
     margin: 0 auto;
     background: #fff8f1;
@@ -130,7 +130,7 @@ body, html {
     top: 32px;
     left: 40px;
     color: #b48a78;
-    font-size: 1.1rem;
+    font-size: 1.4rem;
     font-weight: 500;
     opacity: 0.7;
     letter-spacing: 0.5px;
@@ -168,8 +168,8 @@ body, html {
   
   .diary-textarea {
     width: 100%;
-    max-width: 900px;
-    min-height: 45vh;
+    max-width: 1100px;
+    min-height: 55vh;
     background: #fff;
     /* 종이질감 배경 추가 */
     background-image: 
@@ -215,7 +215,7 @@ body, html {
     font-family: 'Nanum Pen Script', 'Segoe UI', 'Apple SD Gothic Neo', sans-serif;
     color: #7a5a3a;
     padding: 32px 24px 32px 60px; /* 왼쪽 패딩 증가 */
-    margin: 120px auto 0 auto;
+    margin: 150px auto 0 auto; /* Increased top margin from 120px */
     resize: vertical;
     box-shadow: 
       0 1.5px 0 #e2cdb0 inset,
@@ -269,12 +269,10 @@ body, html {
   }
   
   .diary-actions {
-    width: 100%;
-    max-width: 900px;
-    margin: 24px auto 0 auto;
-    display: flex;
-    justify-content: flex-end;
-    gap: 16px;
+    position: absolute;
+    top: 110px;
+    right: 58px;
+    z-index: 5;
   }
   
   /* 종이질감 플레이리스트 헤딩 스타일 추가 */
@@ -289,51 +287,50 @@ body, html {
   
   /* 종이질감 버튼 스타일 개선 */
   .diary-save-btn {
-    background: linear-gradient(90deg, #f7cfa0 0%, #f4e0cf 100%);
-    /* 종이질감 배경 추가 */
-    background-image: 
-      linear-gradient(90deg, #f7cfa0 0%, #f4e0cf 100%),
-      radial-gradient(circle at 30% 30%, rgba(180, 140, 120, 0.02) 0%, transparent 50%),
-      radial-gradient(circle at 70% 70%, rgba(180, 140, 120, 0.02) 0%, transparent 50%);
-    background-size: 
-      100% 100%,
-      80px 80px,
-      100px 100px;
-    background-position: 
-      0 0,
-      0 0,
-      20px 20px;
-    color: #7a5a3a;
-    border: 1.5px solid #e2cdb0;
-    border-radius: 8px;
-    font-size: 1.1rem;
-    font-family: inherit;
-    padding: 10px 28px;
-    font-weight: bold;
+    background-color: #505050;
+    color: white;
+    border: none;
+    width: 50px;
+    height: 50px;
+    padding: 0;
+    border-radius: 8px; /* Making it a rounded square */
     cursor: pointer;
-    box-shadow: 
-      0 2px 8px rgba(244, 224, 207, 0.18),
-      inset 0 1px 0 rgba(255, 255, 255, 0.3);
-    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s ease;
+    flex-shrink: 0; /* Prevent button from shrinking */
   }
-  .diary-save-btn:hover {
-    background: #ffe3c2;
-    background-image: 
-      linear-gradient(90deg, #ffe3c2 0%, #f7cfa0 100%),
-      radial-gradient(circle at 30% 30%, rgba(180, 140, 120, 0.03) 0%, transparent 50%),
-      radial-gradient(circle at 70% 70%, rgba(180, 140, 120, 0.03) 0%, transparent 50%);
-    background-size: 
-      100% 100%,
-      80px 80px,
-      100px 100px;
-    color: #a06c4b;
-    transform: translateY(-1px);
-    box-shadow: 
-      0 4px 12px rgba(244, 224, 207, 0.25),
-      inset 0 1px 0 rgba(255, 255, 255, 0.4);
-  }
-  
-  .diary-cancel-btn {
+
+.diary-save-btn img {
+  width: 28px;
+  height: 28px;
+}
+
+.diary-save-btn:hover:not(:disabled) {
+  background-color: #3a3a3a;
+}
+
+.diary-save-btn:disabled {
+  background-color: #a0a0a0;
+  cursor: not-allowed;
+}
+
+.loader {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #fff;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.diary-cancel-btn {
     background: #fff8f1;
     /* 종이질감 배경 추가 */
     background-image: 
