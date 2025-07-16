@@ -39,6 +39,15 @@ public class User extends BaseEntity {
     @Column(name = "onboarding_completed", nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
     private boolean onboardingCompleted = false;
     
+    // 명시적인 getter/setter 추가
+    public boolean isOnboardingCompleted() {
+        return onboardingCompleted;
+    }
+    
+    public void setOnboardingCompleted(boolean onboardingCompleted) {
+        this.onboardingCompleted = onboardingCompleted;
+    }
+    
     // Spotify 관련 필드들
     @Column(name = "spotify_oauth_id")
     private String spotifyOauthId;

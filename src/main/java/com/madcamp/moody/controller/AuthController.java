@@ -16,6 +16,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -172,32 +173,11 @@ public class AuthController {
             
             System.out.println("OAuth ID: " + oauthId);
             
-            // 현재 OAuth2User가 Spotify 사용자인지 확인
-            String displayName = oauth2User.getAttribute("display_name");
-            String country = oauth2User.getAttribute("country");
-            boolean isSpotifyUser = (displayName != null) || (country != null);
+            // 단순히 oauth_id로 사용자 찾기
+            User user = userRepository.findByOauthId(oauthId);
+            System.out.println("User found: " + (user != null ? "yes (name: " + user.getName() + ")" : "no"));
+            return user;
             
-            System.out.println("isSpotifyUser: " + isSpotifyUser + " (displayName: " + displayName + ", country: " + country + ")");
-            
-            if (isSpotifyUser) {
-                System.out.println("Spotify 사용자로 인식됨 - User 테이블에서 Spotify OAuth ID로 찾는 중...");
-                // Spotify 사용자라면 User 테이블에서 spotify_oauth_id로 찾기
-                User spotifyUser = userRepository.findBySpotifyOauthId(oauthId);
-                System.out.println("Spotify User found: " + (spotifyUser != null ? "yes" : "no"));
-                
-                if (spotifyUser != null) {
-                    System.out.println("Spotify User details - Name: " + spotifyUser.getName() + ", DisplayName: " + spotifyUser.getSpotifyDisplayName());
-                    return spotifyUser;
-                }
-                System.out.println("Spotify 사용자를 찾을 수 없음");
-                return null;
-            } else {
-                System.out.println("카카오 사용자로 인식됨 - User 테이블에서 직접 찾는 중...");
-                // 카카오 사용자라면 직접 찾기
-                User user = userRepository.findByOauthId(oauthId);
-                System.out.println("Kakao User found: " + (user != null ? "yes (name: " + user.getName() + ")" : "no"));
-                return user;
-            }
         } catch (Exception e) {
             System.err.println("현재 사용자 조회 실패: " + e.getMessage());
             e.printStackTrace();
@@ -235,7 +215,8 @@ public class AuthController {
             
             System.out.println("OAuth ID in success: " + oauthId);
             
-            User user = userRepository.findByOauthId(oauthId);
+            // getCurrentAuthenticatedUser 메서드를 사용해서 사용자 찾기
+            User user = getCurrentAuthenticatedUser(oauth2User);
             System.out.println("User from DB in success: " + (user != null ? "found" : "not found"));
             
             if (user == null) {
@@ -283,8 +264,134 @@ public class AuthController {
 
     // 온보딩 완료 처리
     @PostMapping("/onboarding-complete")
+    @Transactional
     public ResponseEntity<?> completeOnboarding(@AuthenticationPrincipal OAuth2User oauth2User, 
                                                @RequestBody Map<String, Object> onboardingData) {
+        try {
+            System.out.println("=== 온보딩 완료 처리 시작 ===");
+            System.out.println("받은 온보딩 데이터: " + onboardingData);
+            if (oauth2User == null) {
+                return ResponseEntity.status(401).body(Map.of("error", "인증되지 않은 사용자"));
+            }
+
+            Object idAttribute = oauth2User.getAttribute("id");
+            String oauthId;
+            
+            if (idAttribute instanceof Long) {
+                oauthId = String.valueOf((Long) idAttribute);
+            } else if (idAttribute instanceof String) {
+                oauthId = (String) idAttribute;
+            } else {
+                oauthId = String.valueOf(idAttribute);
+            }
+            
+            // getCurrentAuthenticatedUser 메서드를 사용해서 사용자 찾기
+            User user = getCurrentAuthenticatedUser(oauth2User);
+            if (user == null) {
+                return ResponseEntity.status(404).body(Map.of("error", "사용자를 찾을 수 없습니다"));
+            }
+            
+            System.out.println("사용자 찾음: " + user.getName() + " (ID: " + user.getId() + ")");
+
+            // 온보딩 완료 표시
+            user.setOnboardingCompleted(true);
+            
+            // 온보딩 데이터 업데이트
+            String nickname = (String) onboardingData.get("nickname");
+            System.out.println("닉네임: " + nickname);
+            if (nickname != null && !nickname.trim().isEmpty()) {
+                user.setName(nickname);
+                System.out.println("닉네임 설정됨: " + nickname);
+            }
+            
+            // 음악 지역 선호도 저장 (배열로 받아서 처리)
+            @SuppressWarnings("unchecked")
+            List<String> musicRegions = (List<String>) onboardingData.get("musicRegion");
+            System.out.println("음악 지역: " + musicRegions);
+            if (musicRegions != null && !musicRegions.isEmpty()) {
+                // 여러 지역이 선택된 경우 BOTH로 설정, 하나만 선택된 경우 해당 지역으로 설정
+                if (musicRegions.size() > 1) {
+                    user.setMusicRegion(MusicRegion.BOTH);
+                    System.out.println("음악 지역 설정됨: BOTH");
+                } else {
+                    String region = musicRegions.get(0);
+                    MusicRegion musicRegion = MusicRegion.fromValue(region);
+                    if (musicRegion != null) {
+                        user.setMusicRegion(musicRegion);
+                        System.out.println("음악 지역 설정됨: " + musicRegion);
+                    }
+                }
+            }
+            
+            // 음악 장르 선호도 저장 (여러 장르를 JSON으로 저장)
+            @SuppressWarnings("unchecked")
+            List<String> musicPreferences = (List<String>) onboardingData.get("musicPreferences");
+            System.out.println("음악 장르: " + musicPreferences);
+            if (musicPreferences != null && !musicPreferences.isEmpty()) {
+                try {
+                    // 프론트엔드 용어를 데이터베이스 용어로 변환
+                    List<String> convertedGenres = new ArrayList<>();
+                    for (String genre : musicPreferences) {
+                        MusicGenre musicGenre = MusicGenre.convertToMusicGenre(genre);
+                        if (musicGenre != null) {
+                            convertedGenres.add(musicGenre.name());
+                        }
+                    }
+                    
+                    ObjectMapper objectMapper = new ObjectMapper();
+                    String musicGenresJson = objectMapper.writeValueAsString(convertedGenres);
+                    user.setMusicGenres(musicGenresJson);
+                    System.out.println("음악 장르 설정됨: " + musicGenresJson);
+                } catch (JsonProcessingException e) {
+                    System.err.println("Error serializing music genres: " + e.getMessage());
+                }
+            }
+            
+            System.out.println("저장 전 사용자 정보 - 이름: " + user.getName() + ", 지역: " + user.getMusicRegion() + ", 장르: " + user.getMusicGenres() + ", 온보딩완료: " + user.isOnboardingCompleted());
+            
+            User savedUser = userRepository.save(user);
+            System.out.println("save() 메서드 반환값 - 이름: " + savedUser.getName() + ", 지역: " + savedUser.getMusicRegion() + ", 장르: " + savedUser.getMusicGenres() + ", 온보딩완료: " + savedUser.isOnboardingCompleted());
+            
+            userRepository.flush(); // 명시적으로 flush 호출
+            System.out.println("flush() 완료");
+            
+            System.out.println("사용자 정보 저장 완료");
+            System.out.println("저장 후 사용자 정보 - 이름: " + user.getName() + ", 지역: " + user.getMusicRegion() + ", 장르: " + user.getMusicGenres() + ", 온보딩완료: " + user.isOnboardingCompleted());
+            
+            // 저장 후 다시 조회해서 확인
+            User retrievedUser = userRepository.findByOauthId(oauthId);
+            if (retrievedUser != null) {
+                System.out.println("재조회된 사용자 정보 - 이름: " + retrievedUser.getName() + ", 지역: " + retrievedUser.getMusicRegion() + ", 장르: " + retrievedUser.getMusicGenres() + ", 온보딩완료: " + retrievedUser.isOnboardingCompleted());
+            }
+            
+            // 업데이트된 사용자 정보를 응답에 포함 (재조회된 정보 사용)
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "온보딩이 완료되었습니다");
+            
+            User responseUser = retrievedUser != null ? retrievedUser : user;
+            response.put("user", Map.of(
+                "id", responseUser.getId(),
+                "name", responseUser.getName(),
+                "onboardingCompleted", responseUser.isOnboardingCompleted(),
+                "musicRegion", responseUser.getMusicRegion(),
+                "musicGenres", responseUser.getMusicGenres()
+            ));
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            System.err.println("Error in completeOnboarding: " + e.getMessage());
+            System.err.println("Exception type: " + e.getClass().getSimpleName());
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(Map.of("error", "서버 오류가 발생했습니다: " + e.getMessage()));
+        }
+    }
+
+
+
+    // 디버깅용: 현재 사용자 정보 확인
+    @GetMapping("/debug-user")
+    public ResponseEntity<?> debugUser(@AuthenticationPrincipal OAuth2User oauth2User) {
         try {
             if (oauth2User == null) {
                 return ResponseEntity.status(401).body(Map.of("error", "인증되지 않은 사용자"));
@@ -301,73 +408,28 @@ public class AuthController {
                 oauthId = String.valueOf(idAttribute);
             }
             
-            User user = userRepository.findByOauthId(oauthId);
+            // getCurrentAuthenticatedUser 메서드를 사용해서 사용자 찾기
+            User user = getCurrentAuthenticatedUser(oauth2User);
             if (user == null) {
                 return ResponseEntity.status(404).body(Map.of("error", "사용자를 찾을 수 없습니다"));
             }
-
-            // 온보딩 완료 표시
-            user.setOnboardingCompleted(true);
             
-            // 온보딩 데이터 업데이트
-            String nickname = (String) onboardingData.get("nickname");
-            if (nickname != null && !nickname.trim().isEmpty()) {
-                user.setName(nickname);
-            }
+            Map<String, Object> userInfo = new HashMap<>();
+            userInfo.put("id", user.getId());
+            userInfo.put("name", user.getName());
+            userInfo.put("oauthId", user.getOauthId());
+            userInfo.put("onboardingCompleted", user.isOnboardingCompleted());
+            userInfo.put("musicRegion", user.getMusicRegion());
+            userInfo.put("musicGenres", user.getMusicGenres());
+            userInfo.put("createdAt", user.getCreatedAt());
+            userInfo.put("updatedAt", user.getUpdatedAt());
             
-            // 음악 지역 선호도 저장
-            String musicRegion = (String) onboardingData.get("musicRegion");
-            if (musicRegion != null) {
-                user.setMusicRegion(MusicRegion.fromValue(musicRegion));
-            }
-            
-            // 음악 장르 선호도 저장 (여러 장르를 JSON으로 저장)
-            @SuppressWarnings("unchecked")
-            List<String> musicPreferences = (List<String>) onboardingData.get("musicPreferences");
-            if (musicPreferences != null && !musicPreferences.isEmpty()) {
-                try {
-                    // 프론트엔드 용어를 데이터베이스 용어로 변환
-                    List<String> convertedGenres = new ArrayList<>();
-                    for (String genre : musicPreferences) {
-                        MusicGenre musicGenre = convertToMusicGenre(genre);
-                        if (musicGenre != null) {
-                            convertedGenres.add(musicGenre.name());
-                        }
-                    }
-                    
-                    ObjectMapper objectMapper = new ObjectMapper();
-                    String musicGenresJson = objectMapper.writeValueAsString(convertedGenres);
-                    user.setMusicGenres(musicGenresJson);
-                } catch (JsonProcessingException e) {
-                    System.err.println("Error serializing music genres: " + e.getMessage());
-                }
-            }
-            
-            userRepository.save(user);
-            
-            return ResponseEntity.ok(Map.of("message", "온보딩이 완료되었습니다"));
+            return ResponseEntity.ok(userInfo);
             
         } catch (Exception e) {
-            System.err.println("Error in completeOnboarding: " + e.getMessage());
+            System.err.println("Error in debugUser: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(500).body(Map.of("error", "서버 오류가 발생했습니다"));
-        }
-    }
-
-    // 프론트엔드 용어를 MusicGenre enum으로 변환하는 메서드
-    private MusicGenre convertToMusicGenre(String frontendGenre) {
-        switch (frontendGenre) {
-            case "팝": return MusicGenre.pop;
-            case "락": return MusicGenre.rock;
-            case "힙합": return MusicGenre.hip_hop;
-            case "R&B": return MusicGenre.r_n_b;
-            case "K-POP": return MusicGenre.k_pop;
-            case "재즈": return MusicGenre.jazz;
-            case "EDM": return MusicGenre.electronic;
-            case "컨트리": return MusicGenre.country;
-            case "댄스": return MusicGenre.dance;
-            case "인디": return MusicGenre.indie;
-            default: return null;
         }
     }
 

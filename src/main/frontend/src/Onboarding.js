@@ -62,9 +62,13 @@ function Onboarding() {
 
       console.log('백엔드 응답:', response.status);
       if (response.ok) {
-        console.log('온보딩 완료 성공, dashboard로 이동');
-        // Dashboard로 이동
-        navigate('/dashboard');
+        const result = await response.json();
+        console.log('온보딩 완료 성공:', result);
+        console.log('업데이트된 사용자 정보:', result.user);
+        // 잠시 대기 후 Dashboard로 이동 (데이터베이스 업데이트 시간 확보)
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 1000);
       } else {
         console.error('온보딩 완료 실패');
         // 에러가 있어도 dashboard로 이동

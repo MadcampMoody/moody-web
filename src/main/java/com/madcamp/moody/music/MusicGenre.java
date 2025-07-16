@@ -35,7 +35,7 @@ public enum MusicGenre {
         return null;
     }
 
-    private MusicGenre convertToMusicGenre(String frontendGenre) {
+    public static MusicGenre convertToMusicGenre(String frontendGenre) {
         switch (frontendGenre) {
             case "팝": return MusicGenre.pop;
             case "락": return MusicGenre.rock;
