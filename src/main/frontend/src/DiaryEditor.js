@@ -4,6 +4,7 @@ import TopBar from "./components/TopBar";
 import "./DiaryEditor.css";
 import { SpotifyContext } from "./contexts/SpotifyContext"; // SpotifyContext import
 import checkIcon from './assets/check.png'; // 아이콘 import
+import dropdownIcon from './assets/dropdown.png'; // 드롭다운 아이콘 import
 
 const HeartIcon = ({ className, onClick }) => (
   <svg className={className} onClick={onClick} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -269,20 +270,10 @@ function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, o
               className="diary-dropdown-trigger"
               onClick={() => setShowDropdown(v => !v)}
             >
-              <span className="dropdown-dots">⋮</span>
+              <img src={dropdownIcon} alt="Dropdown" />
             </button>
             {showDropdown && (
               <div className="diary-dropdown-menu">
-                <div 
-                  className="diary-dropdown-item"
-                  onClick={() => {
-                    setShowDropdown(false);
-                    /* 수정 모드 진입 */
-                  }}
-                >
-                  <span className="dropdown-icon">✏️</span>
-                  수정
-                </div>
                 <div 
                   className="diary-dropdown-item diary-dropdown-delete"
                   onClick={() => {
@@ -299,7 +290,7 @@ function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, o
         )}
       </div>
 
-      {content && (
+      {content && !(diary && diary.content) && (
         <div className="diary-actions">
           <button className="diary-save-btn" onClick={handleSave} disabled={loading}>
             {loading ? <div className="loader"></div> : <img src={checkIcon} alt="Save" />}

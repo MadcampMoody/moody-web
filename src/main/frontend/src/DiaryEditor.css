@@ -36,6 +36,7 @@ body, html {
     max-width: 1200px; /* Increased from 800px */
     width: 100%;
     margin: 0 auto;
+    margin-top: 100px;
     background: #fff8f1;
     /* 종이질감 효과 강화 */
     background-image: 
@@ -73,7 +74,8 @@ body, html {
     align-items: stretch;
     justify-content: flex-start;
     position: relative;
-    padding: 20px;
+    padding: 10px;
+    padding-top: 20px;
     box-sizing: border-box;
     /* 종이 그림자 효과 */
     box-shadow: 
@@ -90,7 +92,7 @@ body, html {
   .diary-main-paper::before {
     content: '';
     position: absolute;
-    top: -1px;
+    top: 20px; /* 기존 -1px에서 20px로 변경 */
     left: -1px;
     right: -1px;
     bottom: -1px;
@@ -374,90 +376,70 @@ body, html {
   .diary-dropdown-container {
     position: absolute;
     top: 20px;
-    right: 20px;
+    right: 40px;
     z-index: 10;
   }
   
   .diary-dropdown-trigger {
-    background: rgba(255, 248, 241, 0.9);
-    border: 1.5px solid #e2cdb0;
+    background: #505050;
+    border: none;
     border-radius: 8px;
-    width: 40px;
-    height: 40px;
+    width: 50px;
+    height: 50px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 8px rgba(244, 224, 207, 0.3);
-    backdrop-filter: blur(5px);
+    transition: background 0.2s, box-shadow 0.2s;
+    box-shadow: 0 2px 8px rgba(80, 80, 80, 0.10);
+    padding: 0;
   }
   
   .diary-dropdown-trigger:hover {
-    background: rgba(247, 207, 160, 0.9);
-    border-color: #d4b896;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(244, 224, 207, 0.4);
+    background: #383838;
+    box-shadow: 0 4px 12px rgba(80, 80, 80, 0.18);
   }
-  
-  .dropdown-dots {
-    font-size: 18px;
-    color: #7a5a3a;
-    font-weight: bold;
-    line-height: 1;
+  .diary-dropdown-trigger img {
+    width: 28px;
+    height: 28px;
   }
-  
-  .diary-dropdown-menu {
-    position: absolute;
-    top: 45px;
-    right: 0;
-    background: #fff8f1;
-    border: 1.5px solid #e2cdb0;
-    border-radius: 12px;
-    box-shadow: 0 8px 25px rgba(122, 90, 58, 0.15);
-    overflow: hidden;
-    min-width: 140px;
-    backdrop-filter: blur(10px);
-    animation: dropdownFadeIn 0.2s ease-out;
-  }
-  
-  @keyframes dropdownFadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(-5px) scale(0.95);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0) scale(1);
-    }
-  }
-  
-  .diary-dropdown-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 12px 16px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-size: 14px;
-    font-weight: 500;
-    color: #7a5a3a;
-    border-bottom: 1px solid rgba(226, 205, 176, 0.3);
-  }
-  
-  .diary-dropdown-item:last-child {
-    border-bottom: none;
-  }
-  
-  .diary-dropdown-item:hover {
-    background: rgba(247, 207, 160, 0.3);
-    color: #5d4332;
-  }
-  
-  .diary-dropdown-item.diary-dropdown-delete:hover {
-    background: rgba(255, 107, 107, 0.1);
-    color: #d63031;
-  }
+
+.diary-dropdown-menu {
+  position: absolute;
+  top: 55px;
+  right: 0;
+  background: #505050;
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(80, 80, 80, 0.18);
+  overflow: hidden;
+  min-width: 140px;
+  backdrop-filter: blur(10px);
+  animation: dropdownFadeIn 0.2s ease-out;
+  padding: 8px 0;
+}
+
+.diary-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 24px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 500;
+  color: #fff;
+  background: transparent;
+  border: none;
+  transition: background 0.2s, color 0.2s;
+}
+.diary-dropdown-item:hover {
+  background: #383838;
+  color: #ffd6a0;
+}
+.diary-dropdown-item.diary-dropdown-delete:hover {
+  background: #d63031;
+  color: #fff;
+}
   
   .dropdown-icon {
     font-size: 16px;
