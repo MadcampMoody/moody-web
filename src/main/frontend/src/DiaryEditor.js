@@ -20,6 +20,10 @@ function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, o
   const [likedTrackIds, setLikedTrackIds] = useState(new Set());
   const playlistRef = useRef(null);
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   // 배경 스타일 동적 적용
   useEffect(() => {
     // 컴포넌트 마운트 시 배경 스타일 적용

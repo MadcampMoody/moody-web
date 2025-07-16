@@ -373,7 +373,7 @@ body, html {
 .diary-save-btn-top {
   position: absolute;
   top: 15px; /* 20px에서 수정 */
-  right: 70px; /* 80px에서 수정 */
+  right: 20px; /* 70px에서 20px으로 수정하여 오른쪽으로 이동 */
   background: #505050;
   /* 종이질감 배경 추가 */
   background-image: 
