@@ -282,28 +282,9 @@ const SpotifyPlayer = () => {
     return () => clearTimeout(timer);
   }, [playerState.currentTrack]);
 
-  // 토큰이 없거나 플레이어가 없으면 로딩 표시
-  if (!playerState.accessToken) {
-    return (
-      <div className="spotify-player loading">
-        <div className="loading-text">
-          <div>Spotify 인증 확인 중...</div>
-          <div style={{ fontSize: '12px', marginTop: '8px', opacity: 0.7 }}>
-            토큰 갱신 중이거나 Spotify 로그인이 필요할 수 있습니다
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!playerState.player || !playerState.isReady) {
-    return (
-      <div className="spotify-player loading">
-        <div className="loading-text">
-          {!playerState.player ? 'Spotify 플레이어 초기화 중...' : '웹 플레이어 준비 중...'}
-        </div>
-      </div>
-    );
+  // 토큰이 없거나 플레이어가 없으면 조용히 숨김 (페이지 전체 오류 방지)
+  if (!playerState.accessToken || !playerState.player || !playerState.isReady) {
+    return null; // 컴포넌트를 렌더링하지 않음으로써 페이지 전체에 영향 없음
   }
 
   return (

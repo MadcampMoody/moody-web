@@ -210,27 +210,32 @@ class SpotifyPlayerService {
     }
 
     try {
-      // 먼저 Spotify 연동 상태 확인
+      // 먼저 Spotify 연동 상태 확인 (실패해도 조용히 처리)
       console.log('Spotify 연동 상태 확인 중...');
-      const statusResponse = await fetch('http://127.0.0.1:8080/api/spotify/status', {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      if (statusResponse.ok) {
-        const statusData = await statusResponse.json();
-        console.log('Spotify 연동 상태:', statusData);
-        if (!statusData.spotifyLinked) {
-          console.log('Spotify가 연동되지 않았습니다. Spotify 로그인이 필요합니다.');
-          return null;
+      try {
+        const statusResponse = await fetch('http://127.0.0.1:8080/api/spotify/status', {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        if (statusResponse.ok) {
+          const statusData = await statusResponse.json();
+          console.log('Spotify 연동 상태:', statusData);
+          if (!statusData.spotifyLinked) {
+            console.log('Spotify가 연동되지 않았습니다. Spotify 로그인이 필요합니다.');
+            return null;
+          }
+        } else {
+          console.log('Spotify 상태 확인 실패:', statusResponse.status);
+          // 상태 확인 실패해도 토큰 요청은 시도해보기 (자동 갱신 가능)
         }
-      } else {
-        console.log('Spotify 상태 확인 실패:', statusResponse.status);
-        // 상태 확인 실패해도 토큰 요청은 시도해보기 (자동 갱신 가능)
+      } catch (statusError) {
+        console.log('Spotify 상태 확인 중 오류 발생 (조용히 처리):', statusError.message);
+        // 상태 확인 실패해도 토큰 요청은 시도해보기
       }
 
       const token = await this.getSpotifyAccessToken();
@@ -325,7 +330,8 @@ class SpotifyPlayerService {
       }
 
     } catch (error) {
-      console.error('Spotify Player 초기화 중 전체 오류:', error);
+      console.log('Spotify Player 초기화 중 오류 발생 (조용히 처리):', error.message);
+      // 오류가 발생해도 페이지 전체에 영향 없도록 조용히 처리
       return null;
     }
   }

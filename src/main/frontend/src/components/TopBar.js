@@ -15,8 +15,13 @@ const TopBar = () => {
     const initializeGlobalPlayer = async () => {
       if (isSpotifyLoggedIn && !playerInitialized && !spotifyPlayerService.player) {
         console.log('전역 Spotify Player 초기화 시작...');
-        await spotifyPlayerService.initializePlayer();
-        setPlayerInitialized(true);
+        try {
+          await spotifyPlayerService.initializePlayer();
+          setPlayerInitialized(true);
+        } catch (error) {
+          console.log('Spotify Player 초기화 실패 (조용히 처리):', error.message);
+          // 초기화 실패해도 페이지 전체에 영향 없도록 조용히 처리
+        }
       }
     };
 
@@ -37,6 +42,7 @@ const TopBar = () => {
 
   const handleProfile = () => {
     console.log('내 프로필 버튼 클릭');
+    navigate('/profile');
   };
 
   const handleSpotifyLogin = () => {

@@ -5,6 +5,7 @@ import Onboarding from "./Onboarding";
 import Dashboard from "./Dashboard";
 import MusicRecommendPage from "./components/MusicRecommendPage";
 import DiaryEditorWrapper from "./DiaryEditorWrapper";
+import ProfilePage from "./components/ProfilePage";
 import TopBar from "./components/TopBar";
 
 
@@ -109,6 +110,7 @@ const AppLayout = () => {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/music_recommend" element={<MusicRecommendPage />} />
           <Route path="/diary/:date" element={<DiaryEditorWrapper />} />
+          <Route path="/profile" element={<ProfilePage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>

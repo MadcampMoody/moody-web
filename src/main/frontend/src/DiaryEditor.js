@@ -29,7 +29,7 @@ function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, o
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
-  
+
   useEffect(() => {
     // 컴포넌트 마운트 시 배경 스타일 적용
     document.body.style.background = '#f5f1e8';
@@ -228,38 +228,55 @@ function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, o
       return;
     }
 
-    const trackUris = recommendedTracks.map(track => `spotify:track:${track.trackId}`);
-    const result = await spotifyPlayerService.addTracksToQueue(trackUris);
+    try {
+      const trackUris = recommendedTracks.map(track => `spotify:track:${track.trackId}`);
+      const result = await spotifyPlayerService.addTracksToQueue(trackUris);
 
-    if (result.success) {
-      if (result.playedImmediately) {
-        alert("추천 곡 재생을 시작합니다!");
-      } else if (result.preservedContext) {
-        let message = `추천 곡 ${trackUris.length}개가 큐에 추가되었습니다! 현재 듣고 있는 음악 이후에 재생되고, 그 다음 원래 플레이리스트가 이어집니다.`;
-        
-        if (result.shuffleEnabled) {
-          message += "\n\n⚠️ 셔플 모드가 활성화되어 있어 추천 곡들의 순서가 바뀔 수 있습니다.";
+      if (result.success) {
+        if (result.playedImmediately) {
+          alert("추천 곡 재생을 시작합니다!");
+        } else if (result.preservedContext) {
+          let message = `추천 곡 ${trackUris.length}개가 큐에 추가되었습니다! 현재 듣고 있는 음악 이후에 재생되고, 그 다음 원래 플레이리스트가 이어집니다.`;
+          
+          if (result.shuffleEnabled) {
+            message += "\n\n⚠️ 셔플 모드가 활성화되어 있어 추천 곡들의 순서가 바뀔 수 있습니다.";
+          }
+          
+          alert(message);
+        } else {
+          alert("추천 곡들이 재생목록의 끝에 추가되었습니다!");
         }
-        
-        alert(message);
       } else {
-        alert("추천 곡들이 재생목록의 끝에 추가되었습니다!");
+        alert("재생목록 추가에 실패했습니다. Spotify Premium 계정이 활성화되어 있는지 확인해주세요.");
       }
-    } else {
-      alert("재생목록 추가에 실패했습니다. Spotify Premium 계정이 활성화되어 있는지 확인해주세요.");
+    } catch (error) {
+      console.log('Spotify 큐 추가 중 오류 발생 (조용히 처리):', error.message);
+      alert("Spotify 연결에 문제가 있습니다. Spotify 로그인 상태를 확인해주세요.");
     }
   };
 
+  // 좋아요 목록 가져오기 (실패해도 계속 시도)
   useEffect(() => {
     const fetchLikedSongs = async () => {
       try {
         const response = await axios.get('/api/liked-songs/ids', { withCredentials: true });
         setLikedTrackIds(new Set(response.data));
+        console.log('좋아요 목록 조회 성공');
       } catch (error) {
-        console.error("좋아요 목록 조회 실패:", error);
+        console.log('좋아요 목록 조회 실패 (조용히 처리):', error.message);
+        // 실패해도 플레이리스트는 정상 표시, 좋아요 상태는 기본값(좋아요 안 함)으로 유지
       }
     };
+
+    // 초기 로드
     fetchLikedSongs();
+
+    // 백그라운드에서 주기적으로 재시도 (30초마다)
+    const retryInterval = setInterval(fetchLikedSongs, 30000);
+
+    return () => {
+      clearInterval(retryInterval);
+    };
   }, []);
 
   const handleToggleLike = async (track) => {
@@ -285,12 +302,11 @@ function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, o
         }, 
         { withCredentials: true }
       );
+      console.log('좋아요 처리 성공:', isLiked ? '제거' : '추가');
     } catch (error) {
-      console.error("좋아요 처리 실패:", error);
-      alert("요청 처리 중 오류가 발생했습니다.");
-      
-      // Revert UI on failure
-      setLikedTrackIds(likedTrackIds);
+      console.log('좋아요 처리 실패 (조용히 처리):', error.message);
+      // 실패해도 UI는 그대로 유지 (사용자 경험 개선)
+      // 백그라운드에서 주기적으로 좋아요 목록을 다시 가져오므로 나중에 동기화됨
     }
   };
 
