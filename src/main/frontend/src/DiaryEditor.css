@@ -262,6 +262,11 @@ body, html {
       0 1.5px 0 #e2cdb0 inset,
       0 4px 12px rgba(180, 140, 120, 0.15);
   }
+
+.diary-textarea.readonly {
+  background-color: #f9f9f9; /* 읽기 전용일 때 배경색 */
+  cursor: default;
+}
   
   /* 텍스트 영역 플레이스홀더 스타일 */
   .diary-textarea::placeholder {

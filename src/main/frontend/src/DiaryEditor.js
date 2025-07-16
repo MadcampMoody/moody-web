@@ -4,7 +4,7 @@ import TopBar from "./components/TopBar";
 import "./DiaryEditor.css";
 import { SpotifyContext } from "./contexts/SpotifyContext"; // SpotifyContext import
 import checkIcon from './assets/check.png'; // 아이콘 import
-import dropdownIcon from './assets/dropdown.png'; // 드롭다운 아이콘 import
+import dropdownIcon from './assets/dropdown.png'; // 드롭다운 아이콘 import 
 
 const HeartIcon = ({ className, onClick }) => (
   <svg className={className} onClick={onClick} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -22,6 +22,7 @@ function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, o
   const [content, setContent] = useState(initialContent);
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
+  const [isEditing, setIsEditing] = useState(false); // 편집 모드 상태 추가
 
   // 음악 추천 관련 state
   const [recommendedTracks, setRecommendedTracks] = useState([]);
@@ -35,6 +36,16 @@ function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, o
 
   // Spotify Context 사용
   const { accessToken, player, isSpotifyLoggedIn } = useContext(SpotifyContext);
+
+  // 컴포넌트가 마운트되거나 diary가 변경될 때 편집 모드 설정
+  useEffect(() => {
+    // diary prop이 없거나 id가 없으면 새 일기로 간주하여 편집 모드로 시작
+    if (!diary || !diary.id) {
+      setIsEditing(true);
+    } else {
+      setIsEditing(false);
+    }
+  }, [diary]);
 
   // 외부 클릭 시 dropdown 닫기
   useEffect(() => {
@@ -264,7 +275,7 @@ function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, o
           )}
         </div>
         {/* 드롭다운 (오른쪽) */}
-        {diary && content && (
+        {diary && content && !isEditing && (
           <div className="diary-dropdown-container" ref={dropdownRef}>
             <button 
               className="diary-dropdown-trigger"
@@ -275,14 +286,14 @@ function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, o
             {showDropdown && (
               <div className="diary-dropdown-menu">
                 <div 
-                  className="diary-dropdown-item diary-dropdown-delete"
+                  className="diary-dropdown-item"
                   onClick={() => {
+                    setIsEditing(true);
                     setShowDropdown(false);
-                    handleDelete();
                   }}
                 >
-                  <span className="dropdown-icon">🗑️</span>
-                  삭제
+                  <span className="dropdown-icon">✏️</span>
+                  수정
                 </div>
               </div>
             )}
@@ -290,7 +301,7 @@ function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, o
         )}
       </div>
 
-      {content && !(diary && diary.content) && (
+      {isEditing && content && (
         <div className="diary-actions">
           <button className="diary-save-btn" onClick={handleSave} disabled={loading}>
             {loading ? <div className="loader"></div> : <img src={checkIcon} alt="Save" />}
@@ -299,12 +310,12 @@ function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, o
       )}
 
       <textarea
-        className="diary-textarea"
+        className={`diary-textarea ${!isEditing ? 'readonly' : ''}`}
         placeholder="오늘의 일기를 작성해보세요..."
         value={content}
         onChange={(e) => setContent(e.target.value)}
         rows={8}
-        readOnly={!!(diary && diary.content)}
+        readOnly={!isEditing}
       />
 
         {error && <p className="error-message" style={{color: 'red', marginTop: '20px', textAlign: 'center'}}>{error}</p>}
