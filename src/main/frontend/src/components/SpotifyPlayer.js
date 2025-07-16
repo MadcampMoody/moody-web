@@ -4,6 +4,9 @@ import spotifyPlayerService from '../services/SpotifyPlayerService';
 
 const SpotifyPlayer = () => {
   const [playerState, setPlayerState] = useState(spotifyPlayerService.getState());
+  const [queueData, setQueueData] = useState(null);
+  const [showQueue, setShowQueue] = useState(false);
+  const [loadingQueue, setLoadingQueue] = useState(false);
   const trackNameRef = useRef(null);
   const artistNameRef = useRef(null);
 
@@ -209,7 +212,33 @@ const SpotifyPlayer = () => {
     const remainingMs = totalMs - currentMs;
     const minutes = Math.floor(remainingMs / 60000);
     const seconds = Math.floor((remainingMs % 60000) / 1000);
-    return `-${minutes}:${seconds.toString().padStart(2, '0')}`;
+    return `-${minutes}:${minutes.toString().padStart(2, '0')}`;
+  };
+
+  // 큐 정보 가져오기
+  const handleShowQueue = async () => {
+    if (!playerState.canControl) {
+      alert('재생 중인 곡이 없습니다.');
+      return;
+    }
+
+    setLoadingQueue(true);
+    try {
+      const queue = await spotifyPlayerService.getCurrentQueue();
+      setQueueData(queue);
+      setShowQueue(true);
+    } catch (error) {
+      console.error('큐 정보 가져오기 실패:', error);
+      alert('큐 정보를 가져올 수 없습니다.');
+    } finally {
+      setLoadingQueue(false);
+    }
+  };
+
+  // 큐 모달 닫기
+  const handleCloseQueue = () => {
+    setShowQueue(false);
+    setQueueData(null);
   };
 
   // 텍스트 길이에 따라 스크롤 애니메이션 클래스 적용
@@ -257,7 +286,12 @@ const SpotifyPlayer = () => {
   if (!playerState.accessToken) {
     return (
       <div className="spotify-player loading">
-        <div className="loading-text">Spotify 인증 확인 중...</div>
+        <div className="loading-text">
+          <div>Spotify 인증 확인 중...</div>
+          <div style={{ fontSize: '12px', marginTop: '8px', opacity: 0.7 }}>
+            토큰 갱신 중이거나 Spotify 로그인이 필요할 수 있습니다
+          </div>
+        </div>
       </div>
     );
   }
@@ -340,6 +374,21 @@ const SpotifyPlayer = () => {
             <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" fill="currentColor"/>
           </svg>
         </button>
+
+        <button 
+          className={`control-btn queue-btn ${!playerState.canControl ? 'disabled' : ''}`} 
+          onClick={handleShowQueue}
+          disabled={!playerState.canControl || loadingQueue}
+          title={!playerState.canControl ? "재생 중인 곡이 없습니다" : "재생 큐 보기"}
+        >
+          {loadingQueue ? (
+            <div className="loading-spinner"></div>
+          ) : (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z" fill="currentColor"/>
+            </svg>
+          )}
+        </button>
       </div>
 
       <div className="progress-section">
@@ -358,6 +407,85 @@ const SpotifyPlayer = () => {
           {playerState.duration ? formatRemainingTime(playerState.position, playerState.duration) : '-0:00'}
         </span>
       </div>
+
+      {/* 큐 모달 */}
+      {showQueue && (
+        <div className="queue-modal-overlay" onClick={handleCloseQueue}>
+          <div className="queue-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="queue-modal-header">
+              <h3>재생 큐</h3>
+              <button className="close-btn" onClick={handleCloseQueue}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="currentColor"/>
+                </svg>
+              </button>
+            </div>
+            
+            <div className="queue-content">
+              {queueData ? (
+                <>
+                  {/* 현재 재생 중인 곡 */}
+                  {queueData.currently_playing && (
+                    <div className="queue-section">
+                      <h4>현재 재생 중</h4>
+                      <div className="queue-track current">
+                        <img 
+                          src={queueData.currently_playing.album.images[0]?.url} 
+                          alt={queueData.currently_playing.album.name}
+                          className="track-image"
+                        />
+                        <div className="track-info">
+                          <div className="track-name">{queueData.currently_playing.name}</div>
+                          <div className="track-artist">
+                            {queueData.currently_playing.artists.map(artist => artist.name).join(', ')}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 큐에 있는 곡들 */}
+                  {queueData.queue && queueData.queue.length > 0 && (
+                    <div className="queue-section">
+                      <h4>다음 곡들 ({queueData.queue.length}곡)</h4>
+                      <div className="queue-tracks">
+                        {queueData.queue.map((track, index) => (
+                          <div key={index} className="queue-track">
+                            <img 
+                              src={track.album.images[0]?.url} 
+                              alt={track.album.name}
+                              className="track-image"
+                            />
+                            <div className="track-info">
+                              <div className="track-name">{track.name}</div>
+                              <div className="track-artist">
+                                {track.artists.map(artist => artist.name).join(', ')}
+                              </div>
+                            </div>
+                            <div className="track-duration">
+                              {formatTime(track.duration_ms)}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {(!queueData.queue || queueData.queue.length === 0) && (
+                    <div className="queue-empty">
+                      <p>큐에 곡이 없습니다.</p>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="queue-loading">
+                  <p>큐 정보를 불러오는 중...</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

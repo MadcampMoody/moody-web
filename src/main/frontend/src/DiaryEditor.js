@@ -5,7 +5,7 @@ import spotifyPlayerService from './services/SpotifyPlayerService';
 import { SpotifyPlayerContext } from "./App";
 
 function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, onCancel }) {
-  const { isSpotifyLoggedIn } = useContext(SpotifyPlayerContext);
+  // Spotify 관련 기능에만 사용, 무드/일기 저장과는 무관하게 분리
   const [content, setContent] = useState(initialContent);
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
@@ -25,6 +25,11 @@ function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, o
   }, []);
 
   // 배경 스타일 동적 적용
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+  
   useEffect(() => {
     // 컴포넌트 마운트 시 배경 스타일 적용
     document.body.style.background = '#f5f1e8';
@@ -229,6 +234,14 @@ function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, o
     if (result.success) {
       if (result.playedImmediately) {
         alert("추천 곡 재생을 시작합니다!");
+      } else if (result.preservedContext) {
+        let message = `추천 곡 ${trackUris.length}개가 큐에 추가되었습니다! 현재 듣고 있는 음악 이후에 재생되고, 그 다음 원래 플레이리스트가 이어집니다.`;
+        
+        if (result.shuffleEnabled) {
+          message += "\n\n⚠️ 셔플 모드가 활성화되어 있어 추천 곡들의 순서가 바뀔 수 있습니다.";
+        }
+        
+        alert(message);
       } else {
         alert("추천 곡들이 재생목록의 끝에 추가되었습니다!");
       }
@@ -387,7 +400,7 @@ function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, o
                 }}>
                     <div className="playlist-header" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px'}}>
                         <div className="header-title" style={{fontWeight: 'bold', fontSize: '1.2rem'}}>{playlistTitle}</div>
-                        {isSpotifyLoggedIn && (
+                        {/* Spotify 로그인 여부와 무관하게 버튼 항상 표시 */}
                           <div className="spotify-link">
                               <button
                                 onClick={handleAddToQueue}
@@ -409,7 +422,7 @@ function DiaryEditor({ selectedDate, selectedMood, initialContent = "", diary, o
                                   <img src="/spotify-logo.svg" alt="Spotify" style={{width: '40px', marginLeft: '8px'}}/>
                               </button>
                           </div>
-                        )}
+                        {/* ) */}
                     </div>
                     <div className="playlist-body">
                         {recommendedTracks.map((track, index) => (

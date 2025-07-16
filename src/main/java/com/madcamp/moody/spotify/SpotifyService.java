@@ -26,6 +26,7 @@ import java.util.HashMap;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import com.madcamp.moody.user.User;
 import com.madcamp.moody.user.UserRepository;
@@ -65,7 +66,7 @@ public class SpotifyService {
 
     /**
      * 현재 로그인된 사용자의 Spotify 액세스 토큰을 반환
-     * 카카오 인증과 완전히 분리된 Spotify 전용 토큰 처리
+     * 토큰이 만료되었으면 refresh token을 사용해서 자동 갱신
      */
     public String getCurrentUserSpotifyAccessToken() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -74,6 +75,8 @@ public class SpotifyService {
             return null;
         }
 
+        User user = null;
+        
         // OAuth2User에서 사용자 식별
         if (authentication.getPrincipal() instanceof OAuth2User) {
             OAuth2User oauth2User = (OAuth2User) authentication.getPrincipal();
@@ -83,21 +86,128 @@ public class SpotifyService {
             if (spotifyDisplayName != null) {
                 // Spotify 로그인 사용자
                 String spotifyId = oauth2User.getAttribute("id");
-                User user = userRepository.findBySpotifyOauthId(spotifyId);
-                if (user != null && user.getSpotifyAccessToken() != null) {
-                    return user.getSpotifyAccessToken();
-                }
+                user = userRepository.findBySpotifyOauthId(spotifyId);
             } else {
                 // 카카오 로그인 사용자 - Spotify 연동 여부 확인
                 String kakaoId = String.valueOf(oauth2User.getAttribute("id"));
-                User user = userRepository.findByOauthId(kakaoId);
-                if (user != null && user.getSpotifyAccessToken() != null) {
-                    return user.getSpotifyAccessToken();
-                }
+                user = userRepository.findByOauthId(kakaoId);
             }
         }
         
-        return null;
+        if (user == null) {
+            return null;
+        }
+        
+        // 액세스 토큰이 없으면 refresh token으로 갱신 시도
+        if (user.getSpotifyAccessToken() == null || user.getSpotifyAccessToken().isEmpty()) {
+            if (user.getSpotifyRefreshToken() != null && !user.getSpotifyRefreshToken().isEmpty()) {
+                System.out.println("액세스 토큰이 없습니다. Refresh token으로 갱신을 시도합니다.");
+                return refreshAccessToken(user);
+            }
+            return null;
+        }
+        
+        // 액세스 토큰이 있으면 유효성 검사 후 필요시 갱신
+        if (isAccessTokenExpired(user.getSpotifyAccessToken())) {
+            if (user.getSpotifyRefreshToken() != null && !user.getSpotifyRefreshToken().isEmpty()) {
+                System.out.println("액세스 토큰이 만료되었습니다. Refresh token으로 갱신을 시도합니다.");
+                return refreshAccessToken(user);
+            }
+        }
+        
+        return user.getSpotifyAccessToken();
+    }
+    
+    /**
+     * 액세스 토큰이 만료되었는지 확인 (JWT 토큰의 exp 클레임 확인)
+     */
+    private boolean isAccessTokenExpired(String accessToken) {
+        try {
+            // JWT 토큰을 .으로 분리
+            String[] parts = accessToken.split("\\.");
+            if (parts.length != 3) {
+                // JWT 형식이 아니면 만료된 것으로 간주
+                return true;
+            }
+            
+            // 페이로드 부분을 디코딩
+            String payload = parts[1];
+            // Base64 패딩 추가
+            while (payload.length() % 4 != 0) {
+                payload += "=";
+            }
+            String decodedPayload = new String(Base64.getDecoder().decode(payload));
+            
+            // JSON 파싱하여 exp 확인
+            ObjectMapper objectMapper = new ObjectMapper();
+            Map<String, Object> claims = objectMapper.readValue(decodedPayload, Map.class);
+            
+            Long exp = (Long) claims.get("exp");
+            if (exp == null) {
+                return true;
+            }
+            
+            // 현재 시간과 비교 (1분 여유 시간)
+            long currentTime = System.currentTimeMillis() / 1000;
+            return exp < (currentTime + 60);
+            
+        } catch (Exception e) {
+            System.err.println("토큰 만료 확인 중 오류: " + e.getMessage());
+            // 오류 발생시 만료된 것으로 간주
+            return true;
+        }
+    }
+    
+    /**
+     * Refresh token을 사용해서 새로운 액세스 토큰을 발급받고 DB에 저장
+     */
+    private String refreshAccessToken(User user) {
+        try {
+            System.out.println("Refresh token으로 액세스 토큰 갱신 시작...");
+            
+            // Spotify Token API 호출
+            String tokenUrl = "https://accounts.spotify.com/api/token";
+            
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("Content-Type", "application/x-www-form-urlencoded");
+            headers.set("Authorization", "Basic " + Base64.getEncoder().encodeToString(
+                (clientId + ":" + clientSecret).getBytes()));
+            
+            MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+            body.add("grant_type", "refresh_token");
+            body.add("refresh_token", user.getSpotifyRefreshToken());
+            
+            HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
+            
+            ResponseEntity<Map> response = restTemplate.postForEntity(tokenUrl, request, Map.class);
+            
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                Map<String, Object> tokenData = response.getBody();
+                
+                String newAccessToken = (String) tokenData.get("access_token");
+                String newRefreshToken = (String) tokenData.get("refresh_token"); // 새로운 refresh token이 있을 수 있음
+                
+                if (newAccessToken != null) {
+                    // DB에 새로운 토큰들 저장
+                    user.setSpotifyAccessToken(newAccessToken);
+                    if (newRefreshToken != null) {
+                        user.setSpotifyRefreshToken(newRefreshToken);
+                    }
+                    userRepository.save(user);
+                    
+                    System.out.println("액세스 토큰 갱신 성공!");
+                    return newAccessToken;
+                }
+            }
+            
+            System.err.println("액세스 토큰 갱신 실패: " + response.getStatusCode());
+            return null;
+            
+        } catch (Exception e) {
+            System.err.println("액세스 토큰 갱신 중 오류: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
     }
 
     /**
